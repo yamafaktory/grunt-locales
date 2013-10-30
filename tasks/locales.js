@@ -218,6 +218,17 @@ module.exports = function (grunt) {
             return new global.MessageFormat(locale.slice(0, 2));
         },
 
+        logMessageFormatError: function (e, key, locale) {
+            grunt.log.warn(
+                'MessageFormat ' + e.name + ':\n',
+                'Error:  ' + e.message + '\n',
+                'Column: ' + e.column + '\n',
+                'Line:   ' + e.line + '\n',
+                'Key:    ' + key.replace('\n', '\\n') + '\n',
+                'Locale: ' + locale
+            );
+        },
+
         parse: function (callback) {
             var that = this,
                 counter = 0,
@@ -301,18 +312,21 @@ module.exports = function (grunt) {
                     locales = grunt.file.readJSON(file),
                     messageFormatLocale = that.getMessageFormatLocale(locale),
                     functionsMap = {},
-                    messageFormat = that.messageFormatFactory(locale, messageFormatLocale),
-                    key;
-                for (key in locales) {
-                    if (locales.hasOwnProperty(key) &&
-                            that.needsTranslationFunction(key, locales[key])) {
-                        functionsMap[key] = that.cleanupTranslationFunction(
-                            messageFormat.precompile(
-                                messageFormat.parse(String(locales[key]))
-                            )
-                        );
+                    messageFormat = that.messageFormatFactory(locale, messageFormatLocale);
+                Object.keys(locales).sort().forEach(function (key) {
+                    var func;
+                    if (!that.needsTranslationFunction(key, locales[key])) {
+                        return;
                     }
-                }
+                    try {
+                        func = messageFormat.precompile(
+                            messageFormat.parse(String(locales[key]))
+                        );
+                    } catch (e) {
+                        return that.logMessageFormatError(e, key, locale);
+                    }
+                    functionsMap[key] = that.cleanupTranslationFunction(func);
+                });
                 grunt.log.writeln('Parsed locales from ' + file.cyan + '.');
                 grunt.file.write(destFile, grunt.template.process(
                     that.getLocaleTemplate(),
@@ -399,15 +413,7 @@ module.exports = function (grunt) {
                             try {
                                 messageFormatMap[locale].parse(str);
                             } catch (e) {
-                                grunt.log.warn(
-                                    'MessageFormat ' + e.name + ':\n',
-                                    'Error:  ' + e.message + '\n',
-                                    'Column: ' + e.column + '\n',
-                                    'Line:   ' + e.line + '\n',
-                                    'Key:    ' + key.replace('\n', '\\n') + '\n',
-                                    'Locale: ' + locale
-                                );
-                                return;
+                                return that.logMessageFormatError(e, key, locale);
                             }
                             if (str.indexOf('<') === -1) {
                                 localesMap[locale][key] = str;

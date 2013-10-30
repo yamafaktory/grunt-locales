@@ -351,5 +351,5 @@ angular.module('localize', ['ngSanitize']).directive('localize', [
 In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [Grunt](http://gruntjs.com/).
 
 ## Release History
-
+ * 2013-10-30   v1.1.0   Catch, format and log errors when parsing JSON locale files.
  * 2013-10-29   v1.0.0   Initial release.
