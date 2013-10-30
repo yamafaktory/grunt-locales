@@ -1,0 +1,59 @@
+{
+  "name": "grunt-locales",
+  "version": "1.0.0",
+  "title": "grunt locales",
+  "description": "Update, build, import and export locales using grunt.",
+  "keywords": [
+    "grunt",
+    "gruntplugin",
+    "locales",
+    "messageformat",
+    "translation",
+    "localization",
+    "internationalization",
+    "i18n",
+    "L10n"
+  ],
+  "homepage": "https://github.com/blueimp/grunt-locales",
+  "author": {
+    "name": "Sebastian Tschan",
+    "url": "https://blueimp.net"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/blueimp/grunt-locales.git"
+  },
+  "bugs": {
+    "url": "https://github.com/blueimp/grunt-locales/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://www.opensource.org/licenses/MIT"
+    }
+  ],
+  "main": "Gruntfile.js",
+  "engines": {
+    "node": ">= 0.8.0"
+  },
+  "scripts": {
+    "test": "grunt test"
+  },
+  "devDependencies": {
+    "grunt-contrib-jshint": "~0.6.0",
+    "grunt-contrib-clean": "~0.4.0",
+    "grunt-contrib-copy": "~0.4.1",
+    "grunt-contrib-nodeunit": "~0.2.0",
+    "grunt": "~0.4.1"
+  },
+  "peerDependencies": {
+    "grunt": "~0.4.1"
+  },
+  "dependencies": {
+    "apricot": "0.0.6",
+    "htmlparser": "~1.7.6",
+    "messageformat": "~0.1.6",
+    "sanitizer": "~0.1.1",
+    "csv": "~0.3.6"
+  }
+}
