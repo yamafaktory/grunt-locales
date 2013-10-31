@@ -35,8 +35,20 @@ module.exports = function (grunt) {
         // Copy files for the test setup:
         copy: {
             json: {
-                src: "test/fixtures/en_US/i18n.json",
-                dest: "tmp/en_US/i18n.json"
+                files: [
+                    {
+                        src: "test/fixtures/en_US/i18n.json",
+                        dest: "tmp/en_US/i18n.json"
+                    },
+                    {
+                        src: "test/fixtures/en_US/i18n-partial.json",
+                        dest: "tmp/en_US/i18n-import.json"
+                    },
+                    {
+                        src: "test/fixtures/de_DE/i18n-partial.json",
+                        dest: "tmp/de_DE/i18n-import.json"
+                    }
+                ]
             }
         },
 
@@ -59,8 +71,8 @@ module.exports = function (grunt) {
                 dest: 'tmp/locales.csv'
             },
             'import': {
-                src: 'test/fixtures/locales.csv',
-                dest: 'tmp/{locale}/i18n-imported.json'
+                src: 'test/fixtures/locales-partial.csv',
+                dest: 'tmp/{locale}/i18n-import.json'
             }
         },
 
@@ -79,6 +91,7 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-contrib-copy');
     grunt.loadNpmTasks('grunt-contrib-nodeunit');
+    grunt.loadNpmTasks('grunt-bump-build-git');
 
     // Whenever the "test" task is run,
     // first clean the "tmp" dir,

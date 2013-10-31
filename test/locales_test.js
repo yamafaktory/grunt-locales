@@ -70,14 +70,14 @@
 
         'import': function (test) {
             test.expect(2);
-            var actual = grunt.file.read('tmp/en_US/i18n-imported.json'),
+            var actual = grunt.file.read('tmp/en_US/i18n-import.json'),
                 expected = grunt.file.read('test/fixtures/en_US/i18n.json');
             test.equal(
                 actual,
                 expected,
                 'Should import CSV locale file to JSON locale files.'
             );
-            actual = grunt.file.read('tmp/de_DE/i18n-imported.json');
+            actual = grunt.file.read('tmp/de_DE/i18n-import.json');
             expected = grunt.file.read('test/fixtures/de_DE/i18n.json');
             test.equal(
                 actual,

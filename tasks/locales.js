@@ -398,7 +398,12 @@ module.exports = function (grunt) {
                 return this.done();
             }
             locales.forEach(function (locale) {
-                localesMap[locale] = {};
+                var localeFile = dest.replace(
+                    that.options.localePlaceholder,
+                    locale
+                );
+                localesMap[locale] = grunt.file.exists(localeFile) ?
+                        grunt.file.readJSON(localeFile) : {};
                 messageFormatMap[locale] = that.messageFormatFactory(locale);
             });
             files.forEach(function (file) {
@@ -429,13 +434,20 @@ module.exports = function (grunt) {
                         grunt.log.writeln('Parsed locales from ' + file.cyan + '.');
                         Object.keys(localesMap).forEach(function (locale) {
                             var localeFile = dest.replace(
-                                that.options.localePlaceholder,
-                                locale
-                            );
+                                    that.options.localePlaceholder,
+                                    locale
+                                ),
+                                messages = localesMap[locale],
+                                sortedMessages = {};
+                            // JavaScript objects are not ordered, however, creating a new object
+                            // based on sorted keys creates a more consistent JSON output:
+                            Object.keys(messages).sort().forEach(function (key) {
+                                sortedMessages[key] = messages[key];
+                            });
                             grunt.file.write(
                                 localeFile,
                                 JSON.stringify(
-                                    localesMap[locale],
+                                    sortedMessages,
                                     that.options.jsonReplacer,
                                     that.options.jsonSpace
                                 ) + '\n'
