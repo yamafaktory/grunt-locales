@@ -1,5 +1,7 @@
 {
+  "\n\t<h1>{title}</h1>\n\t<p>With whitespace.</p>\n": "<h1>{title}</h1><p>With whitespace.</p>",
   "Apples": "Apples",
   "Bananas": "Bananas",
-  "Hello {name}!": "Hello {name}!"
+  "Hello {name}!": "Hello {name}!",
+  "Trickery: '\"\\": "Trickery: '\"\\"
 }

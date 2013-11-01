@@ -4,7 +4,7 @@ var <%= localeName %> = window.<%= localeName %> = window.<%= localeName %> || {
 
 <%= messageFormatLocale %><%
 _.forEach(functionsMap, function (content, key) { %>
-<%= localeName %>["<%= key.replace(/"/g, '\\"') %>"] = <%= content %>;
+<%= localeName %>["<%= key %>"] = <%= content %>;
 <% });
 %>
 }());

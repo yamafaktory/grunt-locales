@@ -20,7 +20,8 @@ module.exports = function (grunt) {
             locales: ['en_US'],
             localizeAttributes: [
                 'localize',
-                'localize-title'
+                'localize-title',
+                'localize-page-title'
             ],
             // Matches the locale name in a file path,
             // e.g. "en_US" in js/locale/en_US/i18n.json:
@@ -32,6 +33,11 @@ module.exports = function (grunt) {
             messageFormatFile:
                 __dirname + '/../node_modules/messageformat/locale/{locale}.js',
             localeTemplate: __dirname + '/../i18n.js.tmpl',
+            htmlmin: {
+                removeComments: true,
+                collapseWhitespace: true
+            },
+            htmlminKeys: false,
             jsonSpace: 2,
             csvEncapsulator: '"',
             csvDelimiter: ',',
@@ -77,11 +83,75 @@ module.exports = function (grunt) {
     extend(LocalesTask.prototype, {
         extend: extend,
 
+        jsEscape: function (str) {
+            // Escape string for output in a quoted JS context,
+            // e.g. var data = "OUTPUT";
+            return str.replace(/\W/g, function (match) {
+                var charCode = match.charCodeAt(0),
+                    hexStr;
+                // Escape non-printable characters, single and double quotes,
+                // and the backslash.
+                // Also escape HTML special characters (<>&) as the string
+                // could be used in a JS context inside of a HTML context,
+                // because a script closing tag (</script>) ends a script
+                // block even inside of a quoted JS string, as the HTML parser
+                // runs before the JS parser.
+                if (charCode < 32 || '"\'\\<>&'.indexOf(match) !== -1) {
+                    hexStr = charCode.toString(16);
+                    if (hexStr.length < 2) {
+                        hexStr = '0' + hexStr;
+                    }
+                    return '\\x' + hexStr;
+                }
+                return match;
+            });
+        },
+
+        sanitize: function (key, content, escapeKey) {
+            // Throws exception for invalid HTML if htmlmin option is set
+            var urlRegExp = this.options.urlRegExp,
+                htmlmin = this.options.htmlmin,
+                htmlminKeys = this.options.htmlminKeys && htmlmin,
+                minify = htmlmin && require('html-minifier').minify,
+                sanitizer = require('sanitizer'),
+                sanitizeUrlCallback = function (value) {
+                    if (urlRegExp.test(value)) {
+                        return value;
+                    }
+                };
+            key = String(key);
+            key = (htmlminKeys && minify(key, htmlminKeys)) || key;
+            if (escapeKey) {
+                key = this.jsEscape(key);
+            }
+            content = String(content);
+            content = sanitizer.sanitize(
+                (htmlmin && minify(content, htmlmin)) || content,
+                sanitizeUrlCallback
+            );
+            return {
+                key: key,
+                content: content
+            };
+        },
+
+        getLocalizeAttributes: function () {
+            if (!this.localizeAttributes) {
+                var attrs = this.options.localizeAttributes;
+                this.localizeAttributes = attrs.concat(attrs.map(
+                    function (attr) {
+                        return 'data-' + attr;
+                    }
+                ));
+            }
+            return this.localizeAttributes;
+        },
+
         getAttributesSelector: function () {
             if (!this.attributesSelector) {
                 var items = [];
-                this.options.localizeAttributes.forEach(function (id) {
-                    items.push('[' + id + '],[data-' + id + ']');
+                this.getLocalizeAttributes().forEach(function (attr) {
+                    items.push('[' + attr + ']');
                 });
                 this.attributesSelector = items.join(',');
             }
@@ -104,23 +174,33 @@ module.exports = function (grunt) {
                 }
                 doc.find(that.getAttributesSelector());
                 doc.each(function (el) {
-                    that.options.localizeAttributes.forEach(function (id) {
-                        if (!el.hasAttribute(id)) {
+                    that.getLocalizeAttributes().forEach(function (attr) {
+                        if (!el.hasAttribute(attr)) {
                             return;
                         }
-                        var val = that.getAttributeValue(el.attributes, id);
+                        var val = that.getAttributeValue(el.attributes, attr),
+                            key = val,
+                            sanitizedData;
                         // Empty attributes can have their attribute name
                         // as attribute value on some environments (e.g. OSX):
-                        if (val === id) {
+                        if (val === attr) {
                             val = '';
                         }
-                        if (!val && id === 'localize') {
+                        if (!val && (attr === 'localize' ||
+                                attr === 'data-localize')) {
                             // Retrieve the element content and
-                            // set the HTML5 version of empty tags:
+                            // use the HTML5 version of empty tags:
                             val = el.innerHTML.replace(/ \/>/g, '>');
+                            try {
+                                sanitizedData = that.sanitize(val, val);
+                                val = sanitizedData.content;
+                                key = sanitizedData.key;
+                            } catch (e) {
+                                return that.logError(e, val, null, file);
+                            }
                         }
                         if (val) {
-                            messages[val] = val;
+                            messages[key] = val;
                         }
                     });
                 });
@@ -218,14 +298,15 @@ module.exports = function (grunt) {
             return new global.MessageFormat(locale.slice(0, 2));
         },
 
-        logMessageFormatError: function (e, key, locale) {
+        logError: function (e, key, locale, file) {
             grunt.log.warn(
-                'MessageFormat ' + e.name + ':\n',
+                e.name + ':\n',
                 'Error:  ' + e.message + '\n',
                 'Column: ' + e.column + '\n',
                 'Line:   ' + e.line + '\n',
                 'Key:    ' + key.replace('\n', '\\n') + '\n',
-                'Locale: ' + locale
+                'Locale: ' + locale + '\n',
+                'File: ' + file
             );
         },
 
@@ -314,18 +395,21 @@ module.exports = function (grunt) {
                     functionsMap = {},
                     messageFormat = that.messageFormatFactory(locale, messageFormatLocale);
                 Object.keys(locales).sort().forEach(function (key) {
-                    var func;
-                    if (!that.needsTranslationFunction(key, locales[key])) {
-                        return;
-                    }
                     try {
+                        var sanitizedData = that.sanitize(key, locales[key], true),
+                            content = sanitizedData.content,
+                            func;
+                        if (!that.needsTranslationFunction(key, content)) {
+                            return;
+                        }
                         func = messageFormat.precompile(
-                            messageFormat.parse(String(locales[key]))
+                            messageFormat.parse(content)
                         );
+                        functionsMap[sanitizedData.key] = that
+                            .cleanupTranslationFunction(func);
                     } catch (e) {
-                        return that.logMessageFormatError(e, key, locale);
+                        return that.logError(e, key, locale, file);
                     }
-                    functionsMap[key] = that.cleanupTranslationFunction(func);
                 });
                 grunt.log.writeln('Parsed locales from ' + file.cyan + '.');
                 grunt.file.write(destFile, grunt.template.process(
@@ -384,13 +468,6 @@ module.exports = function (grunt) {
                 messageFormatMap = {},
                 keyLabel = this.options.csvKeyLabel,
                 csv = require('csv'),
-                urlRegExp = this.options.urlRegExp,
-                sanitizer = require('sanitizer'),
-                sanitizeUrlCallback = function (value) {
-                    if (urlRegExp.test(value)) {
-                        return value;
-                    }
-                },
                 files = this.getSourceFiles(),
                 dest = this.getDestinationFilePath();
             if (!files.length) {
@@ -411,22 +488,16 @@ module.exports = function (grunt) {
                     .transform(function (row) {
                         var key = row[keyLabel];
                         locales.forEach(function (locale) {
-                            var str = row[locale];
-                            if (!str) {
-                                return;
-                            }
                             try {
-                                messageFormatMap[locale].parse(str);
+                                var sanitizedData = that.sanitize(key, row[locale]),
+                                    content = sanitizedData.content;
+                                if (!content) {
+                                    return;
+                                }
+                                messageFormatMap[locale].parse(content);
+                                localesMap[locale][key] = content;
                             } catch (e) {
-                                return that.logMessageFormatError(e, key, locale);
-                            }
-                            if (str.indexOf('<') === -1) {
-                                localesMap[locale][key] = str;
-                            } else {
-                                localesMap[locale][key] = sanitizer.sanitize(
-                                    str,
-                                    sanitizeUrlCallback
-                                );
+                                return that.logError(e, key, locale, file);
                             }
                         });
                     })

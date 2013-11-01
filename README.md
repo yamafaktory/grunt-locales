@@ -24,6 +24,8 @@
     - [options.defaultMessagesFile](#optionsdefaultmessagesfile)
     - [options.messageFormatFile](#optionsmessageformatfile)
     - [options.localeTemplate](#optionslocaletemplate)
+    - [options.htmlmin](#optionshtmlmin)
+    - [options.htmlminKeys](#optionshtmlminkeys)
     - [options.jsonSpace](#optionsjsonspace)
     - [options.jsonReplacer](#optionsjsonreplacer)
     - [options.csvEncapsulator](#optionscsvencapsulator)
@@ -60,7 +62,7 @@ grunt.loadNpmTasks('grunt-locales');
 ### Overview
 The goal of this grunt task is to automate localization of HTML templates.
 
-Executing this task parses `localize` attributes and tag contents in HTML files and collects the parsed strings in JSON files for translation. The translated JSON locale files are then compiled into JS locale files which provide a performant way to use the produced translation functions.
+Executing this task parses `localize` attributes in HTML files and collects the parsed locale strings in JSON files for translation. The translated JSON locale files are then compiled into JS locale files which provide a performant way to use the produced translation functions.
 
 The JSON locale files can also be exported and imported to and from a CSV locale file to ease the translation process.
 
@@ -165,10 +167,11 @@ The list of locales you are using for your translation framework.
 
 #### options.localizeAttributes
 Type: `Array`  
-Default value: `['localize', 'localize-title']`
+Default value: `['localize', 'localize-title', 'localize-page-title']`
 
 A list of attributes that are parsed for locale strings in the HTML templates.  
-If the attribute value is empty, the parser takes the element HTML content as locale string.
+All attributes in this list will also match with attributes of the same name with `data-` prefix.  
+If the attribute value is empty and the matched attribute is `localize` or `data-localize`, the parser takes the element HTML content as locale string.
 
 #### options.localeRegExp
 Type `RegExp`  
@@ -194,7 +197,7 @@ This variable holds the map of translation functions.
 Type: `Boolean`  
 Default value: `true`
 
-If this option is true, removes obsolete locale strings from the JSON files.  
+If enabled, removes obsolete locale strings from the JSON files.  
 This excludes strings parsed from the HTML templates and the default messages.
 
 #### options.defaultMessagesFile
@@ -214,6 +217,20 @@ Type: `String`
 Default value: `__dirname + '/../i18n.js.tmpl'`
 
 The location of the template file used to render the JS locale files.
+
+#### options.htmlmin
+Type: `Object`  
+Default value: `{removeComments: true, collapseWhitespace: true}`
+
+Minifies locale strings containing HTML with [html-minifier](https://github.com/kangax/html-minifier), using the given options object.  
+Set to `false` to disable HTML minification.
+
+#### options.htmlminKeys
+Type: `Boolean`  
+Default value: `false`
+
+If enabled, also minifies the parsed keys containing HTML markup.  
+This option can be useful if the locales are parsed from the unminified templates, but the templates are later minified using [grunt-contrib-htmlmin](https://github.com/gruntjs/grunt-contrib-htmlmin).
 
 #### options.jsonSpace
 Type: `Integer`  
@@ -272,9 +289,9 @@ The allowed URL formats for the CSV import.
 ## HTML templates format
 The templates should contain HTML content which can be parsed by [node-htmlparser](https://github.com/tautologistics/node-htmlparser).
 
-By default, the `locales:update` task parses all elements with `localize` and `localize-title` attributes, as well as the same attributes with `-data` prefix. So elements with `data-localize` or `data-localize-title` attribute will also be parsed, which allows strict HTML conformity.
+By default, the `locales:update` task parses all elements with `localize`, `localize-title` and `localize-page-title` attributes, as well as the same attributes with `-data` prefix. So elements with `data-localize`, `data-localize-title` and `data-localize-page-title` attribute will also be parsed, which allows strict HTML conformity.
 
-The localization string can either be the attribute value itself, or if it is empty, the content of the element.
+The localization string is taken from the attribute value. For the attributes `localize` and `data-localize`, the string will be taken from the content of the element if the attribute value is empty.
 
 ### Template examples
 
@@ -324,7 +341,7 @@ function escapeHTML(str) {
 ```
 
 ### AngularJS directive
-A simple `localize` [AngularJS](http://angularjs.org/) directive:
+A sample `localize` [AngularJS](http://angularjs.org/) directive:
 
 ```js
 angular.module('localize', ['ngSanitize']).directive('localize', [
@@ -351,5 +368,6 @@ angular.module('localize', ['ngSanitize']).directive('localize', [
 In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [Grunt](http://gruntjs.com/).
 
 ## Release History
+ * 2013-10-30   v2.0.0   Sanitize both keys and content, minify HTML output.
  * 2013-10-30   v1.1.0   Catch, format and log errors when parsing JSON locale files.
  * 2013-10-29   v1.0.0   Initial release.
