@@ -334,16 +334,12 @@ module.exports = function (grunt) {
             var that = this,
                 dest = this.getDestinationFilePath();
             this.parse(function (parsedMessages) {
-                var defaultMessagesFile = that.options.defaultMessagesFile,
-                    defaultMessages;
-                if (defaultMessagesFile) {
-                    if (!grunt.file.exists(defaultMessagesFile)) {
-                        grunt.log.warn('Locale file ' + defaultMessagesFile.cyan + ' not found.');
-                    } else {
-                        defaultMessages = grunt.file.readJSON(defaultMessagesFile);
-                        grunt.log.writeln('Parsed locales from ' + defaultMessagesFile.cyan + '.');
-                    }
-                }
+                var defaultMessagesSource = that.options.defaultMessagesSource || '[]',
+                    defaultMessages = {};
+                grunt.file.expand(defaultMessagesSource).forEach(function (file) {
+                    that.extend(defaultMessages, grunt.file.readJSON(file));
+                    grunt.log.writeln('Parsed locales from ' + file.cyan + '.');
+                });
                 that.options.locales.forEach(function (locale) {
                     var localeFile = dest.replace(that.options.localePlaceholder, locale),
                         messages = {},

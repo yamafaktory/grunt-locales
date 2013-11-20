@@ -21,7 +21,7 @@
     - [options.localePlaceholder](#optionslocaleplaceholder)
     - [options.localeName](#optionslocalename)
     - [options.purgeLocales](#optionspurgelocales)
-    - [options.defaultMessagesFile](#optionsdefaultmessagesfile)
+    - [options.defaultMessagesSource](#optionsdefaultmessagessource)
     - [options.messageFormatFile](#optionsmessageformatfile)
     - [options.localeTemplate](#optionslocaletemplate)
     - [options.htmlmin](#optionshtmlmin)
@@ -200,11 +200,12 @@ Default value: `true`
 If enabled, removes obsolete locale strings from the JSON files.  
 This excludes strings parsed from the HTML templates and the default messages.
 
-#### options.defaultMessagesFile
-Type: `String`  
+#### options.defaultMessagesSource
+Type: `String|Array`  
 Default value: `undefined`
 
-The location of the JSON file with default locale strings not found in the HTML templates.
+The source filepath(s) to the JSON file(s) with default locale strings not found in the HTML templates.  
+Supports filename expansion via [globbing patterns](http://gruntjs.com/configuring-tasks#globbing-patterns).
 
 #### options.messageFormatFile
 Type: `String`  
@@ -368,6 +369,7 @@ angular.module('localize', ['ngSanitize']).directive('localize', [
 In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [Grunt](http://gruntjs.com/).
 
 ## Release History
+ * 2013-11-20   v3.0.0   Accept [globbing patterns](http://gruntjs.com/configuring-tasks#globbing-patterns) with the new `defaultMessagesSource` option, replacing `defaultMessagesFile`.
  * 2013-10-30   v2.0.0   Sanitize both keys and content, minify HTML output.
  * 2013-10-30   v1.1.0   Catch, format and log errors when parsing JSON locale files.
  * 2013-10-29   v1.0.0   Initial release.

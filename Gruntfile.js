@@ -56,7 +56,10 @@ module.exports = function (grunt) {
         locales: {
             options: {
                 locales: ['en_US', 'de_DE'],
-                defaultMessagesFile: 'test/fixtures/messages.json'
+                defaultMessagesSource: [
+                    'test/fixtures/messages.json',
+                    'test/fixtures/messages2.json'
+                ]
             },
             update: {
                 src: 'test/fixtures/templates/*.html',
