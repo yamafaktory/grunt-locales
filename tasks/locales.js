@@ -30,8 +30,10 @@ module.exports = function (grunt) {
             localeName: 'i18n',
             // Purge obsolete locale messages by default:
             purgeLocales: true,
-            messageFormatFile:
+            messageFormatLocaleFile:
                 __dirname + '/../node_modules/messageformat/locale/{locale}.js',
+            messageFormatSharedFile:
+                __dirname + '/../node_modules/messageformat/lib/messageformat.include.js',
             localeTemplate: __dirname + '/../i18n.js.tmpl',
             htmlmin: {
                 removeComments: true,
@@ -259,30 +261,22 @@ module.exports = function (grunt) {
             return (key !== value) || /\{/.test(value);
         },
 
-        cleanupTranslationFunction: function (content) {
-            var dataCheckRegExp =
-                /if\(!d\)\{\nthrow new Error\("MessageFormat: No data passed to function\."\);\n\}/g;
-            return content
-                .replace(
-                    /var r = "";\nr \+= (".*?";)\nreturn r;/,
-                    function (match, p1, offset, str) {
-                        if (p1) {
-                            return 'return ' + p1;
-                        }
-                        return str;
-                    }
-                )
-                .replace(/^(function\()d(\)\{\nreturn)/, '$1$2')
-                .replace(dataCheckRegExp, 'd = d || {};');
-        },
-
         getMessageFormatLocale: function (locale) {
-            var file = this.options.messageFormatFile.replace(
+            var file = this.options.messageFormatLocaleFile.replace(
                 this.options.localePlaceholder,
                 locale.slice(0, 2)
             );
             if (!grunt.file.exists(file)) {
-                grunt.fail.warn('MessageFormat file ' + file.cyan + ' not found.');
+                grunt.fail.warn('MessageFormat locale file ' + file.cyan + ' not found.');
+                return this.done();
+            }
+            return grunt.file.read(file);
+        },
+
+        getMessageFormatShared: function () {
+            var file = this.options.messageFormatSharedFile;
+            if (!grunt.file.exists(file)) {
+                grunt.fail.warn('MessageFormat shared file ' + file.cyan + ' not found.');
                 return this.done();
             }
             return grunt.file.read(file);
@@ -388,21 +382,19 @@ module.exports = function (grunt) {
                     destFile = dest.replace(that.options.localePlaceholder, locale),
                     locales = grunt.file.readJSON(file),
                     messageFormatLocale = that.getMessageFormatLocale(locale),
+                    messageFormatShared = that.getMessageFormatShared(),
                     functionsMap = {},
                     messageFormat = that.messageFormatFactory(locale, messageFormatLocale);
                 Object.keys(locales).sort().forEach(function (key) {
                     try {
                         var sanitizedData = that.sanitize(key, locales[key], true),
-                            content = sanitizedData.content,
-                            func;
+                            content = sanitizedData.content;
                         if (!that.needsTranslationFunction(key, content)) {
                             return;
                         }
-                        func = messageFormat.precompile(
+                        functionsMap[sanitizedData.key] = messageFormat.precompile(
                             messageFormat.parse(content)
                         );
-                        functionsMap[sanitizedData.key] = that
-                            .cleanupTranslationFunction(func);
                     } catch (e) {
                         return that.logError(e, key, locale, file);
                     }
@@ -415,6 +407,7 @@ module.exports = function (grunt) {
                             locale: locale,
                             localeName: that.options.localeName,
                             messageFormatLocale: messageFormatLocale,
+                            messageFormatShared: messageFormatShared,
                             functionsMap: functionsMap
                         }
                     }

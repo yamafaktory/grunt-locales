@@ -22,7 +22,8 @@
     - [options.localeName](#optionslocalename)
     - [options.purgeLocales](#optionspurgelocales)
     - [options.defaultMessagesSource](#optionsdefaultmessagessource)
-    - [options.messageFormatFile](#optionsmessageformatfile)
+    - [options.messageFormatLocaleFile](#optionsmessageformatlocalefile)
+    - [options.messageFormatSharedFile](#optionsmessageformatsharedfile)
     - [options.localeTemplate](#optionslocaletemplate)
     - [options.htmlmin](#optionshtmlmin)
     - [options.htmlminKeys](#optionshtmlminkeys)
@@ -207,11 +208,19 @@ Default value: `undefined`
 The source filepath(s) to the JSON file(s) with default locale strings not found in the HTML templates.  
 Supports filename expansion via [globbing patterns](http://gruntjs.com/configuring-tasks#globbing-patterns).
 
-#### options.messageFormatFile
+#### options.messageFormatLocaleFile
 Type: `String`  
 Default value: `__dirname + '/../node_modules/messageformat/locale/{locale}.js'`
 
-The location of the [MessageFormat](https://github.com/SlexAxton/messageformat.js) locale files.
+The location of the [MessageFormat](https://github.com/SlexAxton/messageformat.js) locale file.  
+This locale specific file will be included in the build output.
+
+#### options.messageFormatSharedFile
+Type: `String`  
+Default value: `__dirname + '/../node_modules/messageformat/lib/messageformat.include.js'`
+
+The location of the [MessageFormat](https://github.com/SlexAxton/messageformat.js) shared file.  
+This file will be included in the build output.
 
 #### options.localeTemplate
 Type: `String`  
@@ -369,6 +378,7 @@ angular.module('localize', ['ngSanitize']).directive('localize', [
 In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [Grunt](http://gruntjs.com/).
 
 ## Release History
+ * 2014-02-26   v4.0.0   Updated to work with MessageFormat version 0.1.8; renamed option `messageFormatFile` to `messageFormatLocaleFile` and added option `messageFormatSharedFile`.
  * 2013-11-20   v3.0.0   Accept [globbing patterns](http://gruntjs.com/configuring-tasks#globbing-patterns) with the new `defaultMessagesSource` option, replacing `defaultMessagesFile`.
  * 2013-10-30   v2.0.0   Sanitize both keys and content, minify HTML output.
  * 2013-10-30   v1.1.0   Catch, format and log errors when parsing JSON locale files.

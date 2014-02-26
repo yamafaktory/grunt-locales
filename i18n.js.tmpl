@@ -2,7 +2,8 @@
 var <%= localeName %> = window.<%= localeName %> = window.<%= localeName %> || {},
     MessageFormat = {locale: {}};
 
-<%= messageFormatLocale %><%
+<%= messageFormatLocale %>
+<%= messageFormatShared %><%
 _.forEach(functionsMap, function (content, key) { %>
 <%= localeName %>["<%= key %>"] = <%= content %>;
 <% });
