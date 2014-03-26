@@ -6,11 +6,11 @@
     ]
   },
   "Apples": {
-    "value": "Apples",
+    "value": "Äpfel",
     "files": []
   },
   "Bananas": {
-    "value": "Bananas",
+    "value": "Bananen",
     "files": [
       "test/fixtures/templates/profile.html"
     ]
@@ -22,7 +22,7 @@
     ]
   },
   "Oranges": {
-    "value": "Oranges",
+    "value": "Orangen",
     "files": []
   },
   "Trickery: '\"\\": {

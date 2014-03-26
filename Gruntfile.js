@@ -37,15 +37,15 @@ module.exports = function (grunt) {
             json: {
                 files: [
                     {
-                        src: "test/fixtures/en_US/i18n.json",
+                        src: "test/fixtures/en_US/i18n-partial.json",
                         dest: "tmp/en_US/i18n.json"
                     },
                     {
-                        src: "test/fixtures/en_US/i18n-partial.json",
+                        src: "test/fixtures/en_US/i18n.json",
                         dest: "tmp/en_US/i18n-import.json"
                     },
                     {
-                        src: "test/fixtures/de_DE/i18n-partial.json",
+                        src: "test/fixtures/de_DE/i18n.json",
                         dest: "tmp/de_DE/i18n-import.json"
                     }
                 ]
@@ -71,10 +71,10 @@ module.exports = function (grunt) {
             },
             'export': {
                 src: 'test/fixtures/**/i18n.json',
-                dest: 'tmp/locales.csv'
+                dest: 'tmp/{locale}/i18n.csv'
             },
             'import': {
-                src: 'test/fixtures/locales-partial.csv',
+                src: 'test/fixtures/**/i18n-translated.csv',
                 dest: 'tmp/{locale}/i18n-import.json'
             }
         },

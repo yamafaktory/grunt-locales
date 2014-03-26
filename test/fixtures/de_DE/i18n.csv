@@ -1,0 +1,10 @@
+"ID","de_DE","files"
+"
+	<h1>{title}</h1>
+	<p>With whitespace.</p>
+","<h1>{title}</h1><p>With whitespace.</p>","test/fixtures/templates/post.html"
+"Apples","Apples",""
+"Bananas","Bananas","test/fixtures/templates/profile.html"
+"Hello {name}!","Hello {name}!","test/fixtures/templates/profile.html"
+"Oranges","Oranges",""
+"Trickery: '""\","Trickery: '""\","test/fixtures/templates/profile.html"

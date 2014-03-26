@@ -1,5 +1,19 @@
 {
-  "\n\t<h1>{title}</h1>\n\t<p>With whitespace.</p>\n": "<h1>{title}</h1><p>With whitespace.</p>",
-  "Hello {name}!": "Hello {name}!",
-  "Trickery: '\"\\": "Trickery: '\"\\"
+  "Bananas": {
+    "value": "Bananas",
+    "files": [
+      "test/fixtures/templates/post.html",
+      "test/fixtures/templates/profile.html"
+    ]
+  },
+  "Hello {name}!": {
+    "value": "Hello {name}!",
+    "files": [
+      "test/fixtures/templates/profile.html"
+    ]
+  },
+  "Oranges": {
+    "value": "Oranges",
+    "files": []
+  }
 }

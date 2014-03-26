@@ -57,13 +57,20 @@
         },
 
         'export': function (test) {
-            test.expect(1);
-            var actual = grunt.file.read('tmp/locales.csv'),
-                expected = grunt.file.read('test/fixtures/locales.csv');
+            test.expect(2);
+            var actual = grunt.file.read('tmp/en_US/i18n.csv'),
+                expected = grunt.file.read('test/fixtures/en_US/i18n.csv');
             test.equal(
                 actual,
                 expected,
-                'Should export JSON locale files to CSV locale file.'
+                'Should export JSON locale files to CSV locale files.'
+            );
+            actual = grunt.file.read('tmp/de_DE/i18n.csv');
+            expected = grunt.file.read('test/fixtures/de_DE/i18n.csv');
+            test.equal(
+                actual,
+                expected,
+                'Should export JSON locale files to CSV locale files.'
             );
             test.done();
         },
@@ -71,14 +78,14 @@
         'import': function (test) {
             test.expect(2);
             var actual = grunt.file.read('tmp/en_US/i18n-import.json'),
-                expected = grunt.file.read('test/fixtures/en_US/i18n.json');
+                expected = grunt.file.read('test/fixtures/en_US/i18n-translated.json');
             test.equal(
                 actual,
                 expected,
                 'Should import CSV locale file to JSON locale files.'
             );
             actual = grunt.file.read('tmp/de_DE/i18n-import.json');
-            expected = grunt.file.read('test/fixtures/de_DE/i18n.json');
+            expected = grunt.file.read('test/fixtures/de_DE/i18n-translated.json');
             test.equal(
                 actual,
                 expected,

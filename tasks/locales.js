@@ -19,9 +19,7 @@ module.exports = function (grunt) {
         this.options = task.options({
             locales: ['en_US'],
             localizeAttributes: [
-                'localize',
-                'localize-title',
-                'localize-page-title'
+                'localize'
             ],
             // Matches the locale name in a file path,
             // e.g. "en_US" in js/locale/en_US/i18n.json:
@@ -48,6 +46,7 @@ module.exports = function (grunt) {
                 return str.replace(/"/g, '""');
             },
             csvKeyLabel: 'ID',
+            csvExtraFields: ['files'],
             // Allow ftp, http(s), mailto, anchors
             // and messageformat variables (href="{url}"):
             urlRegExp: /^((ftp|https?):\/\/|mailto:|#|\{\w+\})/
@@ -166,9 +165,51 @@ module.exports = function (grunt) {
                 (attrs[dataId] && attrs[dataId].nodeValue);
         },
 
-        parseTemplate: function (file, callback) {
-            var that = this,
-                messages = {};
+        extendMessages: function (messages, key, obj, update) {
+            var originalMessage = messages[key];
+            // grunt-locales v.4 and lower used a flat format
+            // with strings instead of objects as message values:
+            if (grunt.util.kindOf(obj) === 'string') {
+                obj = {
+                    value: obj
+                };
+            }
+            if (!obj.files) {
+                obj.files = [];
+            }
+            if (originalMessage) {
+                // grunt-locales v.4 and lower used a flat format
+                // with strings instead of objects as message values:
+                if (grunt.util.kindOf(originalMessage) === 'string') {
+                    originalMessage = {
+                        value: originalMessage
+                    };
+                    messages[key] = originalMessage;
+                }
+                if (originalMessage.files && originalMessage.files.length) {
+                    obj.files.forEach(function (file) {
+                        if (originalMessage.files.indexOf(file) === -1) {
+                            originalMessage.files.push(file);
+                        }
+                    });
+                } else {
+                    originalMessage.files = obj.files;
+                }
+                if (update) {
+                    originalMessage.value = obj.value;
+                }
+            } else {
+                if (update) {
+                    return messages;
+                }
+                messages[key] = obj;
+            }
+            messages[key].files.sort();
+            return messages;
+        },
+
+        parseTemplate: function (file, messages, callback) {
+            var that = this;
             require('apricot').Apricot.open(file, function (err, doc) {
                 if (err) {
                     grunt.log.error(err);
@@ -202,7 +243,10 @@ module.exports = function (grunt) {
                             }
                         }
                         if (val) {
-                            messages[key] = val;
+                            that.extendMessages(messages, key, {
+                                value: val,
+                                files: [file]
+                            });
                         }
                     });
                 });
@@ -307,12 +351,22 @@ module.exports = function (grunt) {
         parse: function (callback) {
             var that = this,
                 counter = 0,
-                messages = {};
+                messages = {},
+                defaultMessagesSource = that.options.defaultMessagesSource || '[]';
+            grunt.file.expand(defaultMessagesSource).forEach(function (file) {
+                var defaultMessages = grunt.file.readJSON(file),
+                    key;
+                for (key in defaultMessages) {
+                    if (defaultMessages.hasOwnProperty(key)) {
+                        that.extendMessages(messages, key, defaultMessages[key]);
+                    }
+                }
+                grunt.log.writeln('Parsed locales from ' + file.cyan + '.');
+            });
             this.getSourceFiles().forEach(function (file) {
                 counter += 1;
-                that.parseTemplate(file, function (parsedMessages) {
+                that.parseTemplate(file, messages, function (parsedMessages) {
                     grunt.log.writeln('Parsed locales from ' + file.cyan + '.');
-                    that.extend(messages, parsedMessages);
                     counter -= 1;
                     if (!counter) {
                         callback.call(that, messages);
@@ -326,37 +380,34 @@ module.exports = function (grunt) {
 
         update: function () {
             var that = this,
-                dest = this.getDestinationFilePath();
+                dest = this.getDestinationFilePath(),
+                // Don't purge locales if only a subset of files is parsed:
+                purgeLocales = this.options.purgeLocales && !this.task.args.length;
             this.parse(function (parsedMessages) {
-                var defaultMessagesSource = that.options.defaultMessagesSource || '[]',
-                    defaultMessages = {};
-                grunt.file.expand(defaultMessagesSource).forEach(function (file) {
-                    that.extend(defaultMessages, grunt.file.readJSON(file));
-                    grunt.log.writeln('Parsed locales from ' + file.cyan + '.');
-                });
                 that.options.locales.forEach(function (locale) {
                     var localeFile = dest.replace(that.options.localePlaceholder, locale),
-                        messages = {},
+                        localeFileExists = grunt.file.exists(localeFile),
                         sortedMessages = {},
-                        definedMessages;
-                    if (grunt.file.exists(localeFile)) {
-                        definedMessages = grunt.file.readJSON(localeFile);
-                        grunt.log.writeln('Parsed locales from ' + localeFile.cyan + '.');
-                    }
-                    // If all templates have been parsed and the purgeLocales options is set,
-                    // only keep defined messages which exist as default or parsed messages:
-                    that.extend(
                         messages,
-                        parsedMessages,
-                        defaultMessages,
-                        (that.task.args.length || !that.options.purgeLocales) && definedMessages
-                    );
+                        key;
+                    if (localeFileExists) {
+                        messages = grunt.file.readJSON(localeFile);
+                        grunt.log.writeln('Parsed locales from ' + localeFile.cyan + '.');
+                        // Extend the existing messages with the parsed set:
+                        for (key in parsedMessages) {
+                            if (parsedMessages.hasOwnProperty(key)) {
+                                that.extendMessages(messages, key, parsedMessages[key]);
+                            }
+                        }
+                    } else {
+                        messages = parsedMessages;
+                    }
                     // JavaScript objects are not ordered, however, creating a new object
                     // based on sorted keys creates a more consistent JSON output:
-                    Object.keys(messages).sort().forEach(function (key) {
-                        sortedMessages[key] = (definedMessages && definedMessages[key]) ||
-                            messages[key];
-                    });
+                    Object.keys(purgeLocales ? messages : parsedMessages).sort()
+                        .forEach(function (key) {
+                            sortedMessages[key] = messages[key];
+                        });
                     grunt.file.write(
                         localeFile,
                         JSON.stringify(
@@ -366,7 +417,7 @@ module.exports = function (grunt) {
                         ) + '\n'
                     );
                     grunt.log.writeln(
-                        (definedMessages ? 'Updated' : 'Created') +
+                        (localeFileExists ? 'Updated' : 'Created') +
                             ' locale file ' + localeFile.cyan + '.'
                     );
                 });
@@ -380,14 +431,14 @@ module.exports = function (grunt) {
             this.getSourceFiles().forEach(function (file) {
                 var locale = that.getLocaleFromPath(file),
                     destFile = dest.replace(that.options.localePlaceholder, locale),
-                    locales = grunt.file.readJSON(file),
+                    messages = grunt.file.readJSON(file),
                     messageFormatLocale = that.getMessageFormatLocale(locale),
                     messageFormatShared = that.getMessageFormatShared(),
                     functionsMap = {},
                     messageFormat = that.messageFormatFactory(locale, messageFormatLocale);
-                Object.keys(locales).sort().forEach(function (key) {
+                Object.keys(messages).sort().forEach(function (key) {
                     try {
-                        var sanitizedData = that.sanitize(key, locales[key], true),
+                        var sanitizedData = that.sanitize(key, messages[key].value, true),
                             content = sanitizedData.content;
                         if (!that.needsTranslationFunction(key, content)) {
                             return;
@@ -421,62 +472,75 @@ module.exports = function (grunt) {
             var that = this,
                 dest = this.getDestinationFilePath(),
                 options = this.options,
-                locales = options.locales,
-                localesMap = {},
                 encapsulator = options.csvEncapsulator,
                 delimiter = options.csvDelimiter,
                 lineEnd = options.csvLineEnd,
                 escapeFunc = options.csvEscape,
-                str = encapsulator + this.options.csvKeyLabel + encapsulator;
+                extraFields = options.csvExtraFields || [];
             this.getSourceFiles().forEach(function (file) {
-                localesMap[that.getLocaleFromPath(file)] = grunt.file.readJSON(file);
+                var locale = that.getLocaleFromPath(file),
+                    localesMap = grunt.file.readJSON(file),
+                    destFile = dest.replace(that.options.localePlaceholder, locale),
+                    str;
                 grunt.log.writeln('Parsed locales from ' + file.cyan + '.');
-            });
-            locales.forEach(function (locale) {
-                str += delimiter + encapsulator + locale + encapsulator;
-            });
-            str += lineEnd;
-            Object.keys(localesMap[locales[0]]).sort().forEach(function (key) {
-                str +=  encapsulator + escapeFunc(key) + encapsulator;
-                locales.forEach(function (locale) {
-                    str += delimiter + encapsulator +
-                        escapeFunc(localesMap[locale][key]) +
-                        encapsulator;
+                str = encapsulator + escapeFunc(that.options.csvKeyLabel) + encapsulator +
+                    delimiter +
+                    encapsulator + escapeFunc(locale) + encapsulator;
+                extraFields.forEach(function (field) {
+                    str += delimiter +
+                        encapsulator + escapeFunc(field) + encapsulator;
                 });
                 str += lineEnd;
+                Object.keys(localesMap).sort().forEach(function (key) {
+                    var message = localesMap[key],
+                        messageValue = String(message.value || '');
+                    str +=  encapsulator + escapeFunc(key) + encapsulator +
+                        delimiter +
+                        encapsulator + escapeFunc(messageValue) + encapsulator;
+                    extraFields.forEach(function (field) {
+                        var fieldValue = String(message[field] || '');
+                        str += delimiter +
+                            encapsulator + escapeFunc(fieldValue) + encapsulator;
+                    });
+                    str += lineEnd;
+                });
+                grunt.file.write(destFile, str);
+                grunt.log.writeln('Exported locales to ' + destFile.cyan + '.');
             });
-            grunt.file.write(dest, str);
-            grunt.log.writeln('Exported locales to ' + dest.cyan + '.');
             this.done();
         },
 
         'import': function () {
             var that = this,
                 locales = this.options.locales,
-                localesMap = {},
+                localeFiles = {},
                 messageFormatMap = {},
                 keyLabel = this.options.csvKeyLabel,
                 csv = require('csv'),
                 files = this.getSourceFiles(),
-                dest = this.getDestinationFilePath();
+                dest = this.getDestinationFilePath(),
+                counter = 0;
             if (!files.length) {
                 grunt.log.warn('No import source file found.');
                 return this.done();
             }
             locales.forEach(function (locale) {
-                var localeFile = dest.replace(
+                localeFiles[locale] = dest.replace(
                     that.options.localePlaceholder,
                     locale
                 );
-                localesMap[locale] = grunt.file.exists(localeFile) ?
-                        grunt.file.readJSON(localeFile) : {};
                 messageFormatMap[locale] = that.messageFormatFactory(locale);
             });
             files.forEach(function (file) {
+                counter += 1;
+                var messagesMap = {};
                 csv().from.path(file, {columns: true})
                     .transform(function (row) {
                         var key = row[keyLabel];
                         locales.forEach(function (locale) {
+                            if (!row[locale]) {
+                                return;
+                            }
                             try {
                                 var sanitizedData = that.sanitize(key, row[locale]),
                                     content = sanitizedData.content;
@@ -484,7 +548,12 @@ module.exports = function (grunt) {
                                     return;
                                 }
                                 messageFormatMap[locale].parse(content);
-                                localesMap[locale][key] = content;
+                                if (!messagesMap[locale]) {
+                                    messagesMap[locale] = {};
+                                }
+                                messagesMap[locale][key] = {
+                                    value: content
+                                };
                             } catch (e) {
                                 return that.logError(e, key, locale, file);
                             }
@@ -492,29 +561,35 @@ module.exports = function (grunt) {
                     })
                     .on('end', function () {
                         grunt.log.writeln('Parsed locales from ' + file.cyan + '.');
-                        Object.keys(localesMap).forEach(function (locale) {
-                            var localeFile = dest.replace(
-                                    that.options.localePlaceholder,
-                                    locale
-                                ),
-                                messages = localesMap[locale],
-                                sortedMessages = {};
-                            // JavaScript objects are not ordered, however, creating a new object
-                            // based on sorted keys creates a more consistent JSON output:
-                            Object.keys(messages).sort().forEach(function (key) {
-                                sortedMessages[key] = messages[key];
-                            });
+                        Object.keys(messagesMap).forEach(function (locale) {
+                            var localeFile = localeFiles[locale],
+                                importedMessages = messagesMap[locale],
+                                messages,
+                                key;
+                            if (!grunt.file.exists(localeFile)) {
+                                grunt.log.warn('Import target file ' + localeFile.cyan + ' not found.');
+                                return;
+                            }
+                            messages = grunt.file.readJSON(localeFile);
+                            for (key in importedMessages) {
+                                if (importedMessages.hasOwnProperty(key)) {
+                                    that.extendMessages(messages, key, importedMessages[key], true);
+                                }
+                            }
                             grunt.file.write(
                                 localeFile,
                                 JSON.stringify(
-                                    sortedMessages,
+                                    messages,
                                     that.options.jsonReplacer,
                                     that.options.jsonSpace
                                 ) + '\n'
                             );
                             grunt.log.writeln('Updated locale file ' + localeFile.cyan + '.');
                         });
-                        that.done();
+                        counter -= 1;
+                        if (!counter) {
+                            that.done();
+                        }
                     });
             });
         }

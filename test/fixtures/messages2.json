@@ -1,3 +1,5 @@
 {
-  "Oranges": "Oranges"
+  "Oranges": {
+  	"value": "Oranges"
+  }
 }
