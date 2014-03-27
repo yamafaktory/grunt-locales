@@ -328,13 +328,28 @@ var translatedString = i18n['Hello {name}!']({name: 'Grunt'});
 ```
 
 ### DOM replacement
-An example replacing the content of all HTML nodes of the current document with `data-localize` attribute with their translation function result:
+An example replacing the content of all HTML nodes of the current document with `data-localize` attribute with their translation result:
 
 ```js
 [].forEach.call(document.querySelectorAll('[data-localize]'), function (node) {
-    var func = window.i18n[node.getAttribute('data-localize') || node.innerHTML];
+    var dataset = node.dataset,
+        data = {},
+        attr = dataset.localize,
+        func = window.i18n[attr || node.innerHTML],
+        key;
     if (func) {
-        node.innerHTML = func({name: escapeHTML(node.getAttribute('data-name'))});
+        if (attr) {
+            node.textContent = func(dataset);
+        } else {
+            for (key in dataset) {
+                if (dataset.hasOwnProperty(key) && key !== 'localize') {
+                    data[key] = escapeHTML(dataset[key]);
+                }
+            }
+            node.innerHTML = func(data);
+        }
+    } else if (attr) {
+        node.textContent = attr;
     }
 });
 ```
@@ -352,7 +367,7 @@ function escapeHTML(str) {
             '>' : '&gt;',
             '&' : '&amp;',
             '"' : '&quot;'
-        }[c] || '';
+        }[c];
     });
 }
 ```
@@ -364,6 +379,7 @@ function escapeHTML(str) {
 In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [Grunt](http://gruntjs.com/).
 
 ## Release History
+ * 2014-03-27   v5.0.1   Don't sanitize values for which the security context is not known yet; e.g. attributes instead of HTML element content.
  * 2014-03-26   v5.0.0   Store collected locale strings as value properties of localization objects to allow adding additional information to the localization data, e.g. the parsed template files.
  * 2014-02-26   v4.0.0   Updated to work with MessageFormat version 0.1.8; renamed option `messageFormatFile` to `messageFormatLocaleFile` and added option `messageFormatSharedFile`.
  * 2013-11-20   v3.0.0   Accept [globbing patterns](http://gruntjs.com/configuring-tasks#globbing-patterns) with the new `defaultMessagesSource` option, replacing `defaultMessagesFile`.

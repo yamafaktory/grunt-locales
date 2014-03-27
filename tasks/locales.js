@@ -136,6 +136,19 @@ module.exports = function (grunt) {
             };
         },
 
+        getTextContent: function (str) {
+            var textContent;
+            require('apricot').Apricot.parse(
+                '<body>' + str + '</body>',
+                function (err, doc) {
+                    doc.find('body').each(function (el) {
+                        textContent = el.textContent;
+                    });
+                }
+            );
+            return textContent;
+        },
+
         getLocalizeAttributes: function () {
             if (!this.localizeAttributes) {
                 var attrs = this.options.localizeAttributes;
@@ -438,8 +451,14 @@ module.exports = function (grunt) {
                     messageFormat = that.messageFormatFactory(locale, messageFormatLocale);
                 Object.keys(messages).sort().forEach(function (key) {
                     try {
-                        var sanitizedData = that.sanitize(key, messages[key].value, true),
-                            content = sanitizedData.content;
+                        var value = messages[key].value,
+                            sanitizedData = that.sanitize(key, value, true),
+                            content = sanitizedData.content,
+                            textContent = that.getTextContent(content);
+                        // Keep the original value, if the textContent is the same:
+                        if (value === textContent) {
+                            content = textContent;
+                        }
                         if (!that.needsTranslationFunction(key, content)) {
                             return;
                         }
@@ -538,14 +557,21 @@ module.exports = function (grunt) {
                     .transform(function (row) {
                         var key = row[keyLabel];
                         locales.forEach(function (locale) {
-                            if (!row[locale]) {
+                            var value = row[locale],
+                                content,
+                                textContent;
+                            if (!value) {
                                 return;
                             }
                             try {
-                                var sanitizedData = that.sanitize(key, row[locale]),
-                                    content = sanitizedData.content;
+                                content = that.sanitize(key, value).content;
                                 if (!content) {
                                     return;
+                                }
+                                textContent = that.getTextContent(content);
+                                // Keep the original value, if the textContent is the same:
+                                if (value === textContent) {
+                                    content = textContent;
                                 }
                                 messageFormatMap[locale].parse(content);
                                 if (!messagesMap[locale]) {

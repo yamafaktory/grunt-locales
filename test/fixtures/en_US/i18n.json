@@ -12,8 +12,13 @@
   "Bananas": {
     "value": "Bananas",
     "files": [
-      "test/fixtures/templates/post.html",
       "test/fixtures/templates/profile.html"
+    ]
+  },
+  "First name & last name": {
+    "value": "First name & last name",
+    "files": [
+      "test/fixtures/templates/post.html"
     ]
   },
   "Hello {name}!": {

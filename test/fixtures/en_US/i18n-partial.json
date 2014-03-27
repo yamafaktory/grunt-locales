@@ -2,7 +2,6 @@
   "Bananas": {
     "value": "Bananas",
     "files": [
-      "test/fixtures/templates/post.html",
       "test/fixtures/templates/profile.html"
     ]
   },

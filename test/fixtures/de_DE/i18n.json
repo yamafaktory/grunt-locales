@@ -15,6 +15,12 @@
       "test/fixtures/templates/profile.html"
     ]
   },
+  "First name & last name": {
+    "value": "First name & last name",
+    "files": [
+      "test/fixtures/templates/post.html"
+    ]
+  },
   "Hello {name}!": {
     "value": "Hello {name}!",
     "files": [

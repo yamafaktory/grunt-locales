@@ -4,7 +4,8 @@
 	<p>With whitespace.</p>
 ","<h1>{title}</h1><p>With whitespace.</p>","test/fixtures/templates/post.html"
 "Apples","Apples",""
-"Bananas","Bananas","test/fixtures/templates/post.html,test/fixtures/templates/profile.html"
+"Bananas","Bananas","test/fixtures/templates/profile.html"
+"First name & last name","First name & last name","test/fixtures/templates/post.html"
 "Hello {name}!","Hello {name}!","test/fixtures/templates/profile.html"
 "Oranges","Oranges",""
 "Trickery: '""\","Trickery: '""\","test/fixtures/templates/profile.html"
