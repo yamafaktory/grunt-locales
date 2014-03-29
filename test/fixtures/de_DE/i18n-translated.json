@@ -12,6 +12,7 @@
   "Bananas": {
     "value": "Bananen",
     "files": [
+      "test/fixtures/scripts/profile.js",
       "test/fixtures/templates/profile.html"
     ]
   },
@@ -24,6 +25,7 @@
   "Hello {name}!": {
     "value": "Hello {name}!",
     "files": [
+      "test/fixtures/scripts/profile.js",
       "test/fixtures/templates/profile.html"
     ]
   },

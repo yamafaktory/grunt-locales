@@ -21,6 +21,11 @@ module.exports = function (grunt) {
             localizeAttributes: [
                 'localize'
             ],
+            localizeMethodIdentifiers: [
+                'localize'
+            ],
+            htmlFileRegExp: /\.html$/,
+            jsFileRegExp: /\.js$/,
             // Matches the locale name in a file path,
             // e.g. "en_US" in js/locale/en_US/i18n.json:
             localeRegExp: /\w+(?=\/[^\/]+$)/,
@@ -33,6 +38,9 @@ module.exports = function (grunt) {
             messageFormatSharedFile:
                 __dirname + '/../node_modules/messageformat/lib/messageformat.include.js',
             localeTemplate: __dirname + '/../i18n.js.tmpl',
+            // Allow ftp, http(s), mailto, anchors
+            // and messageformat variables (href="{url}"):
+            urlRegExp: /^((ftp|https?):\/\/|mailto:|#|\{\w+\})/,
             htmlmin: {
                 removeComments: true,
                 collapseWhitespace: true
@@ -46,10 +54,7 @@ module.exports = function (grunt) {
                 return str.replace(/"/g, '""');
             },
             csvKeyLabel: 'ID',
-            csvExtraFields: ['files'],
-            // Allow ftp, http(s), mailto, anchors
-            // and messageformat variables (href="{url}"):
-            urlRegExp: /^((ftp|https?):\/\/|mailto:|#|\{\w+\})/
+            csvExtraFields: ['files']
         });
         if (!this.options.locales.length) {
             return grunt.fail.warn('No locales defined');
@@ -221,9 +226,9 @@ module.exports = function (grunt) {
             return messages;
         },
 
-        parseTemplate: function (file, messages, callback) {
+        parseHTMLFile: function (file, str, messages, callback) {
             var that = this;
-            require('apricot').Apricot.open(file, function (err, doc) {
+            require('apricot').Apricot.parse(str, function (err, doc) {
                 if (err) {
                     grunt.log.error(err);
                     return callback.call(that);
@@ -263,7 +268,60 @@ module.exports = function (grunt) {
                         }
                     });
                 });
-                callback.call(that, messages);
+                callback.call(that);
+            });
+        },
+
+        parseJSFile: function (file, str, messages, callback) {
+            var that = this,
+                identifiers = this.options.localizeMethodIdentifiers,
+                tokens;
+            try {
+                tokens = require('esprima').parse(str, {tokens: true}).tokens;
+                tokens.forEach(function (token, index) {
+                    var token2 = tokens[index + 1],
+                        token3 = tokens[index + 2],
+                        token4 = tokens[index + 3],
+                        key;
+                    if (token4 &&
+                            token.type === 'Identifier' &&
+                            identifiers.indexOf(token.value) !== -1 &&
+                            token2.type === 'Punctuator' &&
+                            token2.value === '(' &&
+                            token3.type === 'String' &&
+                            token4.type === 'Punctuator' &&
+                            (token4.value === ')' || token4.value === ',')
+                    ) {
+                        // The token3 value is a String expression, e.g. "'Hello {name}!'",
+                        // which we have to evaluate to an actual String:
+                        key = require('vm').runInThisContext(token3.value);
+                        that.extendMessages(messages, key, {
+                            value: key,
+                            files: [file]
+                        });
+                    }
+                });
+            } catch (err) {
+                grunt.log.error(err);
+            }
+            callback.call(this);
+        },
+
+        parseSourceFile: function (file, messages, callback) {
+            var that = this;
+            require('fs').readFile(file, function (err, str) {
+                if (err) {
+                    grunt.log.error(err);
+                    return callback.call(that);
+                }
+                if (that.options.htmlFileRegExp.test(file)) {
+                    that.parseHTMLFile(file, str, messages, callback);
+                } else if (that.options.jsFileRegExp.test(file)) {
+                    that.parseJSFile(file, str, messages, callback);
+                } else {
+                    grunt.log.warn('Source file ' + file.cyan + ' not matched as HTML or JS file.');
+                    callback.call(that);
+                }
             });
         },
 
@@ -378,7 +436,7 @@ module.exports = function (grunt) {
             });
             this.getSourceFiles().forEach(function (file) {
                 counter += 1;
-                that.parseTemplate(file, messages, function (parsedMessages) {
+                that.parseSourceFile(file, messages, function () {
                     grunt.log.writeln('Parsed locales from ' + file.cyan + '.');
                     counter -= 1;
                     if (!counter) {

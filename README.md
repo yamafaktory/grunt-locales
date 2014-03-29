@@ -6,41 +6,46 @@
 
 - [Getting Started](#getting-started)
 - [The locales task](#the-locales-task)
-  - [Overview](#overview)
-  - [Usage Examples](#usage-examples)
-    - [Setup](#setup)
-    - [Locales update](#locales-update)
-    - [Locales build](#locales-build)
-    - [Locales export](#locales-export)
-    - [Locales import](#locales-import)
-    - [Watch tasks](#watch-tasks)
-  - [Options](#options)
-    - [options.locales](#optionslocales)
-    - [options.localizeAttributes](#optionslocalizeattributes)
-    - [options.localeRegExp](#optionslocaleregexp)
-    - [options.localePlaceholder](#optionslocaleplaceholder)
-    - [options.localeName](#optionslocalename)
-    - [options.purgeLocales](#optionspurgelocales)
-    - [options.defaultMessagesSource](#optionsdefaultmessagessource)
-    - [options.messageFormatLocaleFile](#optionsmessageformatlocalefile)
-    - [options.messageFormatSharedFile](#optionsmessageformatsharedfile)
-    - [options.localeTemplate](#optionslocaletemplate)
-    - [options.htmlmin](#optionshtmlmin)
-    - [options.htmlminKeys](#optionshtmlminkeys)
-    - [options.jsonSpace](#optionsjsonspace)
-    - [options.jsonReplacer](#optionsjsonreplacer)
-    - [options.csvEncapsulator](#optionscsvencapsulator)
-    - [options.csvDelimiter](#optionscsvdelimiter)
-    - [options.csvLineEnd](#optionscsvlineend)
-    - [options.csvEscape](#optionscsvescape)
-    - [options.csvKeyLabel](#optionscsvkeylabel)
-    - [options.csvExtraFields](#optionscsvextrafields)
-    - [options.urlRegExp](#optionsurlregexp)
+    - [Overview](#overview)
+    - [Usage Examples](#usage-examples)
+        - [Setup](#setup)
+        - [Locales update](#locales-update)
+        - [Locales build](#locales-build)
+        - [Locales export](#locales-export)
+        - [Locales import](#locales-import)
+        - [Watch tasks](#watch-tasks)
+    - [Options](#options)
+        - [options.locales](#optionslocales)
+        - [options.localizeAttributes](#optionslocalizeattributes)
+        - [options.localizeMethodIdentifiers](#optionslocalizemethodidentifiers)
+        - [options.htmlFileRegExp](#optionshtmlfileregexp)
+        - [options.jsFileRegExp](#optionsjsfileregexp)
+        - [options.localeRegExp](#optionslocaleregexp)
+        - [options.localePlaceholder](#optionslocaleplaceholder)
+        - [options.localeName](#optionslocalename)
+        - [options.purgeLocales](#optionspurgelocales)
+        - [options.defaultMessagesSource](#optionsdefaultmessagessource)
+        - [options.messageFormatLocaleFile](#optionsmessageformatlocalefile)
+        - [options.messageFormatSharedFile](#optionsmessageformatsharedfile)
+        - [options.localeTemplate](#optionslocaletemplate)
+        - [options.urlRegExp](#optionsurlregexp)
+        - [options.htmlmin](#optionshtmlmin)
+        - [options.htmlminKeys](#optionshtmlminkeys)
+        - [options.jsonSpace](#optionsjsonspace)
+        - [options.jsonReplacer](#optionsjsonreplacer)
+        - [options.csvEncapsulator](#optionscsvencapsulator)
+        - [options.csvDelimiter](#optionscsvdelimiter)
+        - [options.csvLineEnd](#optionscsvlineend)
+        - [options.csvEscape](#optionscsvescape)
+        - [options.csvKeyLabel](#optionscsvkeylabel)
+        - [options.csvExtraFields](#optionscsvextrafields)
 - [HTML templates format](#html-templates-format)
-  - [Template examples](#template-examples)
+    - [HTML template examples](#html-template-examples)
+- [JavaScript source files format](#javascript-source-files-format)
+    - [JavaScript source file examples](#javascript-source-file-examples)
 - [Translation functions](#translation-functions)
-  - [DOM replacement](#dom-replacement)
-  - [AngularJS directive](#angularjs-directive)
+    - [DOM replacement](#dom-replacement)
+    - [AngularJS directive](#angularjs-directive)
 - [Contributing](#contributing)
 - [Release History](#release-history)
 
@@ -62,47 +67,53 @@ grunt.loadNpmTasks('grunt-locales');
 ## The locales task
 
 ### Overview
-The goal of this grunt task is to automate localization of HTML templates.
+The goal of this grunt task is to automate the localization of HTML templates and JavaScript source files.
 
-Executing this task parses `localize` attributes in HTML files and collects the parsed locale strings in JSON files for translation. The translated JSON locale files are then compiled into JS locale files which provide a performant way to use the produced translation functions.
+grunt-locales parses `localize` attributes in HTML files as well as `localize` method calls in JS files and collects the parsed locale strings in JSON files for translation.  
+The translated JSON locale files are then compiled into JavaScript files containing the map of translation functions.
 
-The JSON locale files can also be exported and imported to and from a CSV locale file to ease the translation process.
+The JSON locale files can also be exported and imported to and from CSV locale files to ease the translation process.
 
 To support translation features like pluralization and gender selection, this project relies on Alex Sexton's [MessageFormat](https://github.com/SlexAxton/messageformat.js) library to parse the locale strings and compile the translation functions.
 
 ### Usage Examples
 
 #### Setup
-In your project's Gruntfile, add a section named `locales` to the data object passed into `grunt.initConfig()`.
+In your project's Gruntfile, add a section named `locales` to the data object passed into `grunt.initConfig()`:
 
 ```js
 grunt.initConfig({
-  locales: {
-    options: {
-      locales: ['en_US', 'de_DE']
-    },
-    update: {
-      src: 'templates/**/*.html',
-      dest: 'js/locales/{locale}/i18n.json'
-    },
-    build: {
-      src: 'js/locales/**/i18n.json',
-      dest: 'js/locales/{locale}/i18n.js'
-    },
-    'export': {
-      src: 'js/locales/**/i18n.json',
-      dest: 'js/locales/{locale}/i18n.csv'
-    },
-    'import': {
-      src: 'js/locales/**/i18n.csv',
-      dest: 'js/locales/{locale}/i18n.json'
+    locales: {
+        options: {
+            locales: ['en_US', 'de_DE']
+        },
+        update: {
+            src: [
+                'templates/**/*.html',
+                'js/app/**/*.js'
+            ],
+            dest: 'js/locales/{locale}/i18n.json'
+        },
+        build: {
+            src: 'js/locales/**/i18n.json',
+            dest: 'js/locales/{locale}/i18n.js'
+        },
+        'export': {
+            src: 'js/locales/**/i18n.json',
+            dest: 'js/locales/{locale}/i18n.csv'
+        },
+        'import': {
+            src: 'js/locales/**/i18n.csv',
+            dest: 'js/locales/{locale}/i18n.json'
+        }
     }
-  },
-})
+});
 ```
 
+Edit the `src` and `dest` paths according to the paths in your application.
+
 #### Locales update
-Parse the HTML template files and update the JSON locale files:
+Parse the HTML template files and JS source files and update the JSON locale files:
 
 ```sh
 grunt locales:update
@@ -116,14 +127,14 @@ grunt locales:build
 ```
 
 #### Locales export
-Export the JSON locale files into one CSV export file:
+Export the JSON locale files into CSV export files:
 
 ```sh
 grunt locales:export
 ```
 
 #### Locales import
-Create (and overwrite) the JSON locale files from the CSV locales file:
+Create (and overwrite) the JSON locale files from the CSV locale files:
 
 ```sh
 grunt locales:import
@@ -135,22 +146,28 @@ Install [grunt-contrib-watch](https://github.com/gruntjs/grunt-contrib-watch) to
 In your project's Gruntfile, add the following to your watch task configuration:
 
 ```js
-watch: {
-  templates: {
-    files: 'templates/**/*.html',
-    tasks: ['locales:update', 'locales:build'],
-    options: {
-      spawn: false,
+grunt.initConfig({
+    // ...
+    watch: {
+        templates: {
+            files: [
+                'templates/**/*.html',
+                'js/app/**/*.js'
+            ],
+            tasks: ['locales:update'],
+            options: {
+                spawn: false,
+            }
+        },
+        locales: {
+            files: 'js/locales/**/i18n.json',
+            tasks: ['locales:build']
+        }
     }
-  },
-  locales: {
-    files: 'js/locales/**/i18n.json',
-    tasks: ['locales:build']
-  }
-}
+});
 ```
 
-Add the following section to only parse changed HTML templates:
+Add the following section to only parse updated HTML templates and JS source files:
 
 ```js
 grunt.event.on('watch', function (action, file) {
@@ -174,6 +191,24 @@ Default value: `['localize']`
 A list of attributes that are parsed for locale strings in the HTML templates.  
 All attributes in this list will also match with attributes of the same name with `data-` prefix.  
 If the attribute value is empty and the matched attribute is `localize` or `data-localize`, the parser takes the element HTML content as locale string.
+
+#### options.localizeMethodIdentifiers
+Type: `Array`  
+Default value: `['localize']`
+
+A list of method identifiers to identify the locale strings of localization calls in the JS source files.
+
+#### options.htmlFileRegExp
+Type `RegExp`  
+Default value: `/\.html$/`
+
+Source files matching this expression will be parsed as HTML files for `localize` attributes.
+
+#### options.jsFileRegExp
+Type `RegExp`  
+Default value: `/\.js$/`
+
+Source files matching this expression will be parsed as JS files for `localize` method calls.
 
 #### options.localeRegExp
 Type `RegExp`  
@@ -200,13 +235,13 @@ Type: `Boolean`
 Default value: `true`
 
 If enabled, removes obsolete locale strings from the JSON files.  
-This excludes strings parsed from the HTML templates and the default messages.
+This excludes strings parsed from the HTML templates, JS source files and the default messages.
 
 #### options.defaultMessagesSource
 Type: `String|Array`  
 Default value: `undefined`
 
-The source filepath(s) to the JSON file(s) with default locale strings not found in the HTML templates.  
+The source filepath(s) to the JSON file(s) with default locale strings not found in the HTML templates or JS source files.  
 Supports filename expansion via [globbing patterns](http://gruntjs.com/configuring-tasks#globbing-patterns).
 
 #### options.messageFormatLocaleFile
@@ -229,6 +264,12 @@ Default value: `__dirname + '/../i18n.js.tmpl'`
 
 The location of the template file used to render the JS locale files.
 
+#### options.urlRegExp
+Type `RegExp`  
+Default value: `/^((ftp|https?):\/\/|mailto:|#|\{\w+\})/`
+
+The allowed URL formats for sanitized HTML output.
+
 #### options.htmlmin
 Type: `Object`  
 Default value: `{removeComments: true, collapseWhitespace: true}`
@@ -241,7 +282,7 @@ Type: `Boolean`
 Default value: `false`
 
 If enabled, also minifies the parsed keys containing HTML markup.  
-This option can be useful if the locales are parsed from the unminified templates, but the templates are later minified using [grunt-contrib-htmlmin](https://github.com/gruntjs/grunt-contrib-htmlmin).
+This option can be useful if the locales are parsed from the unminified templates, but the templates are later minified e.g. using [grunt-contrib-htmlmin](https://github.com/gruntjs/grunt-contrib-htmlmin).
 
 #### options.jsonSpace
 Type: `Integer`  
@@ -295,13 +336,7 @@ The label for the first cell created in the CSV export.
 Type: `Array`  
 Default value: `['files']`
 
-Extra fields from the JSON translation objects which are added to each CSV export row as additional information. 
-
-#### options.urlRegExp
-Type `RegExp`  
-Default value: `/^((ftp|https?):\/\/|mailto:|#|\{\w+\})/`
-
-The allowed URL formats for the CSV import.
+Extra fields from the JSON translation objects which are added to each CSV export row as additional information.
 
 ## HTML templates format
 The templates should contain HTML content which can be parsed by [node-htmlparser](https://github.com/tautologistics/node-htmlparser).
@@ -310,7 +345,7 @@ By default, the `locales:update` task parses all elements with `localize` attrib
 
 The localization string is taken from the attribute value. For the attributes `localize` and `data-localize`, the string will be taken from the content of the element if the attribute value is empty.
 
-### Template examples
+### HTML template examples
 
 ```html
 <div data-name="Grunt" data-localize>Hello {name}!</div>
@@ -320,11 +355,56 @@ The localization string is taken from the attribute value. For the attributes `l
 <div data-num="{{results.length}}" localize>There {num, plural, one{is <strong>one</strong> result} other{are <strong>#</strong> results}}.</div>
 ```
 
+## JavaScript source files format
+The JavaScript source files should contain JavaScript code which can be parsed by [Esprima](http://esprima.org/).
+
+The parser will match all `localize` function calls with a String as first argument.  
+The String must be static and cannot be passed as a variable or concatenation expression.  
+The `localize` function can be invoked as an object method, but has to be written in dot notation and cannot be accessed as a String literal.
+
+### JavaScript source file examples
+By default, the parser will match the following example method calls:
+
+```js
+var result = localize(
+    'Hello {name}!',
+    {name: user.name}
+);
+```
+
+```js
+var result = obj.localize('Save the Orangutans!');
+```
+
+It will __not__ match the following:
+
+```js
+var result = localize(
+    'Hello ' + '{name}!', // Concatenation expression
+    {name: user.name}
+);
+```
+
+```js
+var result = obj.localize(str); // String passed as variable
+```
+
+```js
+var result = obj['localize']('Save the Orangutans!'); // not written in dot notation.
+```
+
 ## Translation functions
 The compiled translation functions can be used the following way:
 
 ```js
-var translatedString = i18n['Hello {name}!']({name: 'Grunt'});
+function localize(key, data) {
+    var func = window.i18n[key];
+    if (func) {
+        return func(data);
+    }
+    return key;
+}
+var result = localize('Hello {name}!', {name: 'Grunt'});
 ```
 
 ### DOM replacement
@@ -373,12 +453,13 @@ function escapeHTML(str) {
 ```
 
 ### AngularJS directive
-[angular-localize](https://github.com/blueimp/angular-localize) is a `localize` directive for [AngularJS](http://angularjs.org/), which uses the translation functions generated by grunt-locales.
+[angular-localize](https://github.com/blueimp/angular-localize) is a `localize` module for [AngularJS](http://angularjs.org/), which uses the translation functions generated by grunt-locales.
 
 ## Contributing
 In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [Grunt](http://gruntjs.com/).
 
 ## Release History
+ * 2014-03-29   v6.0.0   Added support to parse locale Strings from localization method calls in JavaScript source files.
  * 2014-03-27   v5.0.1   Don't sanitize values for which the security context is not known yet; e.g. attributes instead of HTML element content.
  * 2014-03-26   v5.0.0   Store collected locale strings as value properties of localization objects to allow adding additional information to the localization data, e.g. the parsed template files.
  * 2014-02-26   v4.0.0   Updated to work with MessageFormat version 0.1.8; renamed option `messageFormatFile` to `messageFormatLocaleFile` and added option `messageFormatSharedFile`.

@@ -62,7 +62,10 @@ module.exports = function (grunt) {
                 ]
             },
             update: {
-                src: 'test/fixtures/templates/*.html',
+                src: [
+                    'test/fixtures/templates/*.html',
+                    'test/fixtures/scripts/*.js'
+                ],
                 dest: 'tmp/{locale}/i18n.json'
             },
             build: {
