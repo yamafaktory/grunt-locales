@@ -475,7 +475,7 @@ module.exports = function (grunt) {
                     }
                     // JavaScript objects are not ordered, however, creating a new object
                     // based on sorted keys creates a more consistent JSON output:
-                    Object.keys(purgeLocales ? messages : parsedMessages).sort()
+                    Object.keys(purgeLocales ? parsedMessages : messages).sort()
                         .forEach(function (key) {
                             sortedMessages[key] = messages[key];
                         });

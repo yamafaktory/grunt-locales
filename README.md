@@ -156,7 +156,7 @@ grunt.initConfig({
             ],
             tasks: ['locales:update'],
             options: {
-                spawn: false,
+                spawn: false
             }
         },
         locales: {
@@ -330,7 +330,7 @@ The string escape function used for the CSV export.
 Type: `String`  
 Default value: `'ID'`
 
-The label for the first cell created in the CSV export.
+The label for the header cell for the locale keys created in the CSV export.
 
 #### options.csvExtraFields
 Type: `Array`  
@@ -459,6 +459,7 @@ function escapeHTML(str) {
 In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [Grunt](http://gruntjs.com/).
 
 ## Release History
+ * 2014-04-01   v6.0.1   Fixed `purgeLocales` option.
  * 2014-03-29   v6.0.0   Added support to parse locale Strings from localization method calls in JavaScript source files.
  * 2014-03-27   v5.0.1   Don't sanitize values for which the security context is not known yet; e.g. attributes instead of HTML element content.
  * 2014-03-26   v5.0.0   Store collected locale strings as value properties of localization objects to allow adding additional information to the localization data, e.g. the parsed template files.
