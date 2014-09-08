@@ -142,45 +142,22 @@ module.exports = function (grunt) {
         },
 
         getTextContent: function (str) {
-            var textContent;
-            require('apricot').Apricot.parse(
-                '<body>' + str + '</body>',
-                function (err, doc) {
-                    doc.find('body').each(function (el) {
-                        textContent = el.textContent;
-                    });
-                }
-            );
-            return textContent;
-        },
-
-        getLocalizeAttributes: function () {
-            if (!this.localizeAttributes) {
-                var attrs = this.options.localizeAttributes;
-                this.localizeAttributes = attrs.concat(attrs.map(
-                    function (attr) {
-                        return 'data-' + attr;
-                    }
-                ));
-            }
-            return this.localizeAttributes;
+            return require('cheerio')
+                .load('<p>' + str + '</p>')('p')
+                .text();
         },
 
         getAttributesSelector: function () {
             if (!this.attributesSelector) {
-                var items = [];
-                this.getLocalizeAttributes().forEach(function (attr) {
+                var attrs = this.options.localizeAttributes,
+                    items = [];
+                attrs.forEach(function (attr) {
                     items.push('[' + attr + ']');
+                    items.push('[data-' + attr + ']');
                 });
                 this.attributesSelector = items.join(',');
             }
             return this.attributesSelector;
-        },
-
-        getAttributeValue: function (attrs, id) {
-            var dataId = 'data-' + id;
-            return (attrs[id] && attrs[id].nodeValue) ||
-                (attrs[dataId] && attrs[dataId].nodeValue);
         },
 
         extendMessages: function (messages, key, obj, update) {
@@ -227,49 +204,45 @@ module.exports = function (grunt) {
         },
 
         parseHTMLFile: function (file, str, messages, callback) {
-            var that = this;
-            require('apricot').Apricot.parse(str, function (err, doc) {
-                if (err) {
-                    grunt.log.error(err);
-                    return callback.call(that);
-                }
-                doc.find(that.getAttributesSelector());
-                doc.each(function (el) {
-                    that.getLocalizeAttributes().forEach(function (attr) {
-                        if (!el.hasAttribute(attr)) {
-                            return;
+            var that = this,
+                attrs = this.options.localizeAttributes,
+                cheerio = require('cheerio'),
+                // Don't decode entities, as this has the side effect
+                // of turning all non-ascii characters into entities:
+                $ = cheerio.load(str, {decodeEntities: false});
+            $(this.getAttributesSelector()).each(function (index, element) {
+                attrs.forEach(function (attr) {
+                    var $element = $(element),
+                        value = $element.attr(attr) || $element.data(attr),
+                        key,
+                        sanitizedData;
+                    if (value) {
+                        // Decode the entities of the attribute value
+                        // (cheerio default behavior):
+                        value = cheerio
+                            .load('<p title="' + value + '"></p>')('p')
+                            .attr('title');
+                        key = value;
+                    } else if (attr === 'localize') {
+                        // Retrieve the element content:
+                        value = $element.html();
+                        try {
+                            sanitizedData = that.sanitize(value, value);
+                            value = sanitizedData.content;
+                            key = sanitizedData.key;
+                        } catch (e) {
+                            return that.logError(e, value, null, file);
                         }
-                        var val = that.getAttributeValue(el.attributes, attr),
-                            key = val,
-                            sanitizedData;
-                        // Empty attributes can have their attribute name
-                        // as attribute value on some environments (e.g. OSX):
-                        if (val === attr) {
-                            val = '';
-                        }
-                        if (!val && (attr === 'localize' ||
-                                attr === 'data-localize')) {
-                            // Retrieve the element content and
-                            // use the HTML5 version of empty tags:
-                            val = el.innerHTML.replace(/ \/>/g, '>');
-                            try {
-                                sanitizedData = that.sanitize(val, val);
-                                val = sanitizedData.content;
-                                key = sanitizedData.key;
-                            } catch (e) {
-                                return that.logError(e, val, null, file);
-                            }
-                        }
-                        if (val) {
-                            that.extendMessages(messages, key, {
-                                value: val,
-                                files: [file]
-                            });
-                        }
-                    });
+                    }
+                    if (value) {
+                        that.extendMessages(messages, key, {
+                            value: value,
+                            files: [file]
+                        });
+                    }
                 });
-                callback.call(that);
             });
+            callback.call(that);
         },
 
         parseJSFile: function (file, str, messages, callback) {

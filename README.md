@@ -459,6 +459,7 @@ function escapeHTML(str) {
 In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [Grunt](http://gruntjs.com/).
 
 ## Release History
+ * 2014-09-08   v6.1.0   Replaced [Apricot](https://github.com/silentrob/Apricot) with [cheerio](https://github.com/cheeriojs/cheerio) as HTML parsing engine.
  * 2014-04-01   v6.0.1   Fixed `purgeLocales` option.
  * 2014-03-29   v6.0.0   Added support to parse locale Strings from localization method calls in JavaScript source files.
  * 2014-03-27   v5.0.1   Don't sanitize values for which the security context is not known yet; e.g. attributes instead of HTML element content.

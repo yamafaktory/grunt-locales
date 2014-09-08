@@ -1,6 +1,6 @@
 {
   "name": "grunt-locales",
-  "version": "6.0.1",
+  "version": "6.1.0",
   "title": "grunt locales",
   "description": "Update, build, import and export locales using grunt.",
   "keywords": [
@@ -36,29 +36,28 @@
   ],
   "main": "Gruntfile.js",
   "engines": {
-    "node": ">= 0.8.0"
+    "node": ">= 0.10.0"
   },
   "scripts": {
     "test": "grunt test"
   },
   "devDependencies": {
-    "grunt": "~0.4.4",
-    "grunt-contrib-jshint": "~0.9.2",
-    "grunt-contrib-clean": "~0.5.0",
+    "grunt": "~0.4.5",
+    "grunt-contrib-jshint": "~0.10.0",
+    "grunt-contrib-clean": "~0.6.0",
     "grunt-contrib-copy": "~0.5.0",
-    "grunt-contrib-nodeunit": "~0.3.3",
+    "grunt-contrib-nodeunit": "~0.4.1",
     "grunt-bump-build-git": "~1.1.1"
   },
   "peerDependencies": {
-    "grunt": "~0.4.4"
+    "grunt": "~0.4.5"
   },
   "dependencies": {
-    "apricot": "0.0.6",
-    "htmlparser": "1.7.7",
-    "html-minifier": "0.5.6",
-    "esprima": "1.1.1",
+    "cheerio": "0.17.0",
+    "html-minifier": "0.6.8",
+    "esprima": "1.2.2",
     "messageformat": "0.1.8",
-    "sanitizer": "0.1.1",
+    "sanitizer": "0.1.2",
     "csv": "0.3.7"
   }
 }
