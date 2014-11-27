@@ -189,14 +189,25 @@ Type: `Array`
 Default value: `['localize']`
 
 A list of attributes that are parsed for locale strings in the HTML templates.  
-All attributes in this list will also match with attributes of the same name with `data-` prefix.  
-If the attribute value is empty and the matched attribute is `localize` or `data-localize`, the parser takes the element HTML content as locale string.
+All attributes in this list will also match with attributes of the same name with `data-` prefix.
+
+If the attribute value is empty and the attribute key matches the default localize attribute (which is the **first** item in the list of `localizeAttributes`) or the equivalent with `data-` prefix, the parser takes the element HTML content as locale string:
+
+```html
+<p localize><strong>Bananas</strong></p>
+```
+
+The above example will match `<strong>Bananas</strong>` as locale string.
 
 #### options.localizeMethodIdentifiers
 Type: `Array`  
 Default value: `['localize']`
 
-A list of method identifiers to identify the locale strings of localization calls in the JS source files.
+A list of method identifiers to identify the locale strings of localization calls in the JS source files. The default setting will match `Bananas` as locale string in the following code snippet:
+
+```js
+var localizedText = localize('Bananas');
+```
 
 #### options.htmlFileRegExp
 Type `RegExp`  
