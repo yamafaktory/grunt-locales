@@ -59,7 +59,8 @@ module.exports = function (grunt) {
                 defaultMessagesSource: [
                     'test/fixtures/messages.json',
                     'test/fixtures/messages2.json'
-                ]
+                ],
+                localizeAttributes: ['localize', 'localize-title']
             },
             update: {
                 src: [
