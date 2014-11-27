@@ -203,9 +203,20 @@ module.exports = function (grunt) {
             return messages;
         },
 
+        decodeEntities: function (str) {
+            // Decode the entities of the attribute value by making
+            // use of cheerios default string loading behavior:
+            // https://github.com/cheeriojs/cheerio#loading
+            return require('cheerio')
+                .load('<p title="' + str + '">')('p')
+                .attr('title');
+        },
+
         parseHTMLFile: function (file, str, messages, callback) {
             var that = this,
                 attrs = this.options.localizeAttributes,
+                defaultAttr = attrs[0],
+                defaultAttrSelector = '[' + defaultAttr + '],[data-' + defaultAttr + ']',
                 cheerio = require('cheerio'),
                 // Don't decode entities, as this has the side effect
                 // of turning all non-ascii characters into entities:
@@ -214,16 +225,15 @@ module.exports = function (grunt) {
                 attrs.forEach(function (attr) {
                     var $element = $(element),
                         value = $element.attr(attr) || $element.data(attr),
+                        $decode,
                         key,
                         sanitizedData;
                     if (value) {
                         // Decode the entities of the attribute value
                         // (cheerio default behavior):
-                        value = cheerio
-                            .load('<p title="' + value + '"></p>')('p')
-                            .attr('title');
+                        value = that.decodeEntities(value);
                         key = value;
-                    } else if (attr === 'localize') {
+                    } else if (attr === defaultAttr && $element.is(defaultAttrSelector)) {
                         // Retrieve the element content:
                         value = $element.html();
                         try {
