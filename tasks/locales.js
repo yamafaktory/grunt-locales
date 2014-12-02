@@ -258,9 +258,12 @@ module.exports = function (grunt) {
         parseJSFile: function (file, str, messages, callback) {
             var that = this,
                 identifiers = this.options.localizeMethodIdentifiers,
+                result,
                 tokens;
             try {
-                tokens = require('esprima').parse(str, {tokens: true}).tokens;
+                result = require('esprima').parse(str, {tokens: true, loc: true});
+                tokens = result.tokens;
+     
                 tokens.forEach(function (token, index) {
                     var token2 = tokens[index + 1],
                         token3 = tokens[index + 2],
@@ -282,6 +285,12 @@ module.exports = function (grunt) {
                             value: key,
                             files: [file]
                         });
+                    } else if (token.type === 'Identifier' &&
+                            identifiers.indexOf(token.value) !== -1 &&
+                            token2.type === 'Punctuator' &&
+                            token2.value === '(') {
+                        
+                        grunt.log.writeln("Unable to parse locale from " + file + " at line " + token.loc.start.line);
                     }
                 });
             } catch (err) {
