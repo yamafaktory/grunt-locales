@@ -263,7 +263,6 @@ module.exports = function (grunt) {
             try {
                 result = require('esprima').parse(str, {tokens: true, loc: true});
                 tokens = result.tokens;
-     
                 tokens.forEach(function (token, index) {
                     var token2 = tokens[index + 1],
                         token3 = tokens[index + 2],
@@ -273,24 +272,29 @@ module.exports = function (grunt) {
                             token.type === 'Identifier' &&
                             identifiers.indexOf(token.value) !== -1 &&
                             token2.type === 'Punctuator' &&
-                            token2.value === '(' &&
-                            token3.type === 'String' &&
-                            token4.type === 'Punctuator' &&
-                            (token4.value === ')' || token4.value === ',')
-                    ) {
-                        // The token3 value is a String expression, e.g. "'Hello {name}!'",
-                        // which we have to evaluate to an actual String:
-                        key = require('vm').runInThisContext(token3.value);
-                        that.extendMessages(messages, key, {
-                            value: key,
-                            files: [file]
-                        });
-                    } else if (token.type === 'Identifier' &&
-                            identifiers.indexOf(token.value) !== -1 &&
-                            token2.type === 'Punctuator' &&
                             token2.value === '(') {
-                        
-                        grunt.log.writeln("Unable to parse locale from " + file + " at line " + token.loc.start.line);
+                        if (token3.type === 'String' &&
+                                token4.type === 'Punctuator' &&
+                                (token4.value === ')' || token4.value === ',')) {
+                            // The token3 value is a String expression, e.g. "'Hello {name}!'",
+                            // which we have to evaluate to an actual String:
+                            key = require('vm').runInThisContext(token3.value);
+                            that.extendMessages(messages, key, {
+                                value: key,
+                                files: [file]
+                            });
+                        } else {
+                            // The localize method has been called with a non-string argument:
+                            grunt.log.warn(
+                                'Unable to parse locale string from ' +
+                                    file +
+                                    ':' +
+                                    token3.loc.start.line +
+                                    ':' +
+                                    token3.loc.start.column +
+                                    '.'
+                            );
+                        }
                     }
                 });
             } catch (err) {

@@ -1,6 +1,6 @@
 {
   "name": "grunt-locales",
-  "version": "6.1.1",
+  "version": "6.2.0",
   "title": "grunt locales",
   "description": "Update, build, import and export locales using grunt.",
   "keywords": [
