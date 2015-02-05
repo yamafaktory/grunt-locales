@@ -23,6 +23,7 @@
         - [options.localeRegExp](#optionslocaleregexp)
         - [options.localePlaceholder](#optionslocaleplaceholder)
         - [options.localeName](#optionslocalename)
+        - [options.wrapStaticTranslations](#optionswrapstatictranslations)
         - [options.purgeLocales](#optionspurgelocales)
         - [options.defaultMessagesSource](#optionsdefaultmessagessource)
         - [options.messageFormatLocaleFile](#optionsmessageformatlocalefile)
@@ -43,7 +44,7 @@
     - [HTML template examples](#html-template-examples)
 - [JavaScript source files format](#javascript-source-files-format)
     - [JavaScript source file examples](#javascript-source-file-examples)
-- [Translation functions](#translation-functions)
+- [Translation mappings](#translation-mappings)
     - [DOM replacement](#dom-replacement)
     - [AngularJS directive](#angularjs-directive)
 - [Contributing](#contributing)
@@ -70,11 +71,11 @@ grunt.loadNpmTasks('grunt-locales');
 The goal of this grunt task is to automate the localization of HTML templates and JavaScript source files.
 
 grunt-locales parses `localize` attributes in HTML files as well as `localize` method calls in JS files and collects the parsed locale strings in JSON files for translation.  
-The translated JSON locale files are then compiled into JavaScript files containing the map of translation functions.
+The translated JSON locale files are then compiled into JavaScript files containing an object with translation mappings.
 
 The JSON locale files can also be exported and imported to and from CSV locale files to ease the translation process.
 
-To support translation features like pluralization and gender selection, this project relies on Alex Sexton's [MessageFormat](https://github.com/SlexAxton/messageformat.js) library to parse the locale strings and compile the translation functions.
+To support translation features like pluralization and gender selection, this project relies on Alex Sexton's [MessageFormat](https://github.com/SlexAxton/messageformat.js) library to parse the locale strings and compile the dynamic translation functions.
 
 ### Usage Examples
 
@@ -239,7 +240,15 @@ Type: `String`
 Default value: `'i18n'`
 
 The name of the variable added to the `window` object in the created locale scripts.  
-This variable holds the map of translation functions.
+This variable holds the object of translation mappings.
+
+#### wrapStaticTranslations
+Type: `Boolean`  
+Default value: `false`
+
+If enabled, wraps static translation strings with a function.  
+By default, the translation keys are mapped to static strings, unless the translation changes depending on user data, in which case the key maps to a dynamic translation function.  
+This option ensures that the translation mappings all use functions as values.
 
 #### options.purgeLocales
 Type: `Boolean`  
@@ -404,15 +413,20 @@ var result = obj.localize(str); // String passed as variable
 var result = obj['localize']('Save the Orangutans!'); // not written in dot notation.
 ```
 
-## Translation functions
-The compiled translation functions can be used the following way:
+## Translation mappings
+The compiled translation mappings can be used the following way:
 
 ```js
 function localize(key, data) {
-    var func = window.i18n[key];
-    if (func) {
-        return func(data);
+    var translation = window.i18n[key];
+    if (translation) {
+        if (!translation.call) {
+            // Translation is not a function, assume a static string:
+            return translation;
+        }
+        return translation(data);
     }
+    // No mapping found, the translation value is the translation key:
     return key;
 }
 var result = localize('Hello {name}!', {name: 'Grunt'});
@@ -426,18 +440,22 @@ An example replacing the content of all HTML nodes of the current document with 
     var dataset = node.dataset,
         data = {},
         attr = dataset.localize,
-        func = window.i18n[attr || node.innerHTML],
+        translation = window.i18n[attr || node.innerHTML],
         key;
-    if (func) {
+    if (translation) {
         if (attr) {
-            node.textContent = func(dataset);
+            node.textContent = (translation.call && translation(dataset)) || translation;
         } else {
-            for (key in dataset) {
-                if (dataset.hasOwnProperty(key) && key !== 'localize') {
-                    data[key] = escapeHTML(dataset[key]);
+            if (translation.call) {
+                for (key in dataset) {
+                    if (dataset.hasOwnProperty(key) && key !== 'localize') {
+                        data[key] = escapeHTML(dataset[key]);
+                    }
                 }
+                node.innerHTML = translation(data);
+            } else {
+                node.innerHTML = translation;
             }
-            node.innerHTML = func(data);
         }
     } else if (attr) {
         node.textContent = attr;
@@ -464,12 +482,13 @@ function escapeHTML(str) {
 ```
 
 ### AngularJS directive
-[angular-localize](https://github.com/blueimp/angular-localize) is a `localize` module for [AngularJS](http://angularjs.org/), which uses the translation functions generated by grunt-locales.
+[angular-localize](https://github.com/blueimp/angular-localize) is a `localize` module for [AngularJS](http://angularjs.org/), which uses the translation mappings generated by grunt-locales.
 
 ## Contributing
 In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [Grunt](http://gruntjs.com/).
 
 ## Release History
+ * 2015-02-05   v7.0.0   Use static string mappings for non-dynamic translations by default.
  * 2014-12-02   v6.2.0   Log warning if locale string cannot be parsed from a matching method call.
  * 2014-11-27   v6.1.1   Fixed handling of additional localize attributes.
  * 2014-09-08   v6.1.0   Replaced [Apricot](https://github.com/silentrob/Apricot) with [cheerio](https://github.com/cheeriojs/cheerio) as HTML parsing engine.

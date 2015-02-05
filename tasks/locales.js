@@ -31,6 +31,8 @@ module.exports = function (grunt) {
             localeRegExp: /\w+(?=\/[^\/]+$)/,
             localePlaceholder: '{locale}',
             localeName: 'i18n',
+            // Set to true to wrap static translation strings with a function:
+            wrapStaticTranslations: false,
             // Purge obsolete locale messages by default:
             purgeLocales: true,
             messageFormatLocaleFile:
@@ -111,6 +113,10 @@ module.exports = function (grunt) {
                 }
                 return match;
             });
+        },
+
+        quote: function (str) {
+            return '"' + str + '"';
         },
 
         sanitize: function (key, content, escapeKey) {
@@ -369,7 +375,8 @@ module.exports = function (grunt) {
         },
 
         needsTranslationFunction: function (key, value) {
-            return (key !== value) || /\{/.test(value);
+            return (this.options.wrapStaticTranslations && key !== value) ||
+                /\{/.test(value);
         },
 
         getMessageFormatLocale: function (locale) {
@@ -501,24 +508,26 @@ module.exports = function (grunt) {
                     messages = grunt.file.readJSON(file),
                     messageFormatLocale = that.getMessageFormatLocale(locale),
                     messageFormatShared = that.getMessageFormatShared(),
-                    functionsMap = {},
+                    translationsMap = {},
                     messageFormat = that.messageFormatFactory(locale, messageFormatLocale);
                 Object.keys(messages).sort().forEach(function (key) {
                     try {
                         var value = messages[key].value,
                             sanitizedData = that.sanitize(key, value, true),
+                            quotedKey = that.quote(sanitizedData.key),
                             content = sanitizedData.content,
                             textContent = that.getTextContent(content);
                         // Keep the original value, if the textContent is the same:
                         if (value === textContent) {
                             content = textContent;
                         }
-                        if (!that.needsTranslationFunction(key, content)) {
-                            return;
+                        if (that.needsTranslationFunction(key, content)) {
+                            translationsMap[quotedKey] = messageFormat.precompile(
+                                messageFormat.parse(content)
+                            );
+                        } else if (key !== value) {
+                            translationsMap[quotedKey] = that.quote(that.jsEscape(content));
                         }
-                        functionsMap[sanitizedData.key] = messageFormat.precompile(
-                            messageFormat.parse(content)
-                        );
                     } catch (e) {
                         return that.logError(e, key, locale, file);
                     }
@@ -532,7 +541,7 @@ module.exports = function (grunt) {
                             localeName: that.options.localeName,
                             messageFormatLocale: messageFormatLocale,
                             messageFormatShared: messageFormatShared,
-                            functionsMap: functionsMap
+                            translationsMap: translationsMap
                         }
                     }
                 ));

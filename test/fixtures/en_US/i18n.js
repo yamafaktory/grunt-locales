@@ -1,6 +1,6 @@
 (function () {
-var i18n = window.i18n = window.i18n || {},
-    MessageFormat = {locale: {}};
+var i18n = window.i18n = window.i18n || {};
+var MessageFormat = {locale: {}};
 
 MessageFormat.locale.en=function(n){return n===1?"one":"other"}
 

@@ -1,11 +1,11 @@
 (function () {
-var <%= localeName %> = window.<%= localeName %> = window.<%= localeName %> || {},
-    MessageFormat = {locale: {}};
+var i18n = window.<%= localeName %> = window.<%= localeName %> || {};
+var MessageFormat = {locale: {}};
 
 <%= messageFormatLocale %>
 <%= messageFormatShared %><%
-_.forEach(functionsMap, function (content, key) { %>
-<%= localeName %>["<%= key %>"] = <%= content %>;
+_.forEach(translationsMap, function (value, key) { %>
+i18n[<%= key %>] = <%= value %>;
 <% });
 %>
 }());

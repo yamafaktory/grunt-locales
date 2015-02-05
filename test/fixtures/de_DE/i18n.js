@@ -1,6 +1,6 @@
 (function () {
-var i18n = window.i18n = window.i18n || {},
-    MessageFormat = {locale: {}};
+var i18n = window.i18n = window.i18n || {};
+var MessageFormat = {locale: {}};
 
 MessageFormat.locale.de=function(n){return n===1?"one":"other"}
 
@@ -13,14 +13,14 @@ s=function(d,k,p){c(d);return d[k] in p?p[d[k]]:p.other};
 
 i18n["\x0a\x09\x3ch1\x3e{title}\x3c/h1\x3e\x0a\x09\x3cp\x3eWith whitespace.\x3c/p\x3e\x0a"] = function(d){return "<h1>"+v(d,"title")+"</h1><p>With whitespace.</p>"};
 
-i18n["Apples"] = function(d){return "Äpfel"};
+i18n["Apples"] = "Äpfel";
 
-i18n["Bananas"] = function(d){return "Bananen"};
+i18n["Bananas"] = "Bananen";
 
-i18n["First name \x26 last name"] = function(d){return "Vorname & Nachname"};
+i18n["First name \x26 last name"] = "Vorname \x26 Nachname";
 
 i18n["Hello {name}!"] = function(d){return "Hello "+v(d,"name")+"!"};
 
-i18n["Oranges"] = function(d){return "Orangen"};
+i18n["Oranges"] = "Orangen";
 
 }());
