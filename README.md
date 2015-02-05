@@ -242,7 +242,7 @@ Default value: `'i18n'`
 The name of the variable added to the `window` object in the created locale scripts.  
 This variable holds the object of translation mappings.
 
-#### wrapStaticTranslations
+#### options.wrapStaticTranslations
 Type: `Boolean`  
 Default value: `false`
 
