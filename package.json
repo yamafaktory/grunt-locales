@@ -1,6 +1,6 @@
 {
   "name": "grunt-locales",
-  "version": "7.0.1",
+  "version": "7.0.2",
   "title": "grunt locales",
   "description": "Update, build, import and export locales using grunt.",
   "keywords": [
@@ -45,7 +45,7 @@
     "grunt-bump-build-git": "~1.1.1"
   },
   "peerDependencies": {
-    "grunt": "~0.4.5"
+    "grunt": "0.4.x"
   },
   "dependencies": {
     "cheerio": "0.17.0",
