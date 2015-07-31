@@ -51,7 +51,7 @@
 - [Release History](#release-history)
 
 ## Getting Started
-This plugin requires Grunt `~0.4.4`
+This plugin requires Grunt `0.4.x`
 
 If you haven't used [Grunt](http://gruntjs.com/) before, be sure to check out the [Getting Started](http://gruntjs.com/getting-started) guide, as it explains how to create a [Gruntfile](http://gruntjs.com/sample-gruntfile) as well as install and use Grunt plugins. Once you're familiar with that process, you may install this plugin with this command:
 
@@ -486,18 +486,3 @@ function escapeHTML(str) {
 
 ## Contributing
 In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [Grunt](http://gruntjs.com/).
-
-## Release History
- * 2015-02-05   v7.0.0   Use static string mappings for non-dynamic translations by default.
- * 2014-12-02   v6.2.0   Log warning if locale string cannot be parsed from a matching method call.
- * 2014-11-27   v6.1.1   Fixed handling of additional localize attributes.
- * 2014-09-08   v6.1.0   Replaced [Apricot](https://github.com/silentrob/Apricot) with [cheerio](https://github.com/cheeriojs/cheerio) as HTML parsing engine.
- * 2014-04-01   v6.0.1   Fixed `purgeLocales` option.
- * 2014-03-29   v6.0.0   Added support to parse locale Strings from localization method calls in JavaScript source files.
- * 2014-03-27   v5.0.1   Don't sanitize values for which the security context is not known yet; e.g. attributes instead of HTML element content.
- * 2014-03-26   v5.0.0   Store collected locale strings as value properties of localization objects to allow adding additional information to the localization data, e.g. the parsed template files.
- * 2014-02-26   v4.0.0   Updated to work with MessageFormat version 0.1.8; renamed option `messageFormatFile` to `messageFormatLocaleFile` and added option `messageFormatSharedFile`.
- * 2013-11-20   v3.0.0   Accept [globbing patterns](http://gruntjs.com/configuring-tasks#globbing-patterns) with the new `defaultMessagesSource` option, replacing `defaultMessagesFile`.
- * 2013-10-30   v2.0.0   Sanitize both keys and content, minify HTML output.
- * 2013-10-30   v1.1.0   Catch, format and log errors when parsing JSON locale files.
- * 2013-10-29   v1.0.0   Initial release.
