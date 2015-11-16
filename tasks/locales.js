@@ -36,9 +36,9 @@ module.exports = function (grunt) {
             // Purge obsolete locale messages by default:
             purgeLocales: true,
             messageFormatLocaleFile:
-                __dirname + '/../node_modules/messageformat/locale/{locale}.js',
+                'messageformat/locale/{locale}.js',
             messageFormatSharedFile:
-                __dirname + '/../node_modules/messageformat/lib/messageformat.include.js',
+                'messageformat/lib/messageformat.include.js',
             localeTemplate: __dirname + '/../i18n.js.tmpl',
             // Allow ftp, http(s), mailto, anchors
             // and messageformat variables (href="{url}"):
@@ -384,6 +384,7 @@ module.exports = function (grunt) {
                 this.options.localePlaceholder,
                 locale.slice(0, 2)
             );
+            file = require.resolve(file);
             if (!grunt.file.exists(file)) {
                 grunt.fail.warn('MessageFormat locale file ' + file.cyan + ' not found.');
                 return this.done();
@@ -393,6 +394,7 @@ module.exports = function (grunt) {
 
         getMessageFormatShared: function () {
             var file = this.options.messageFormatSharedFile;
+            file = require.resolve(file);
             if (!grunt.file.exists(file)) {
                 grunt.fail.warn('MessageFormat shared file ' + file.cyan + ' not found.');
                 return this.done();
