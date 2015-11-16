@@ -505,17 +505,13 @@ module.exports = function (grunt) {
             var that = this,
                 dest = this.getDestinationFilePath();
             this.getSourceFiles().forEach(function (file) {
-                grunt.log.writeln("build locale from " + file);
                 var locale = that.getLocaleFromPath(file),
                     destFile = dest.replace(that.options.localePlaceholder, locale),
-                    messages = grunt.file.readJSON(file);
-                grunt.log.writeln("load message format");
-                var messageFormatLocale = that.getMessageFormatLocale(locale);
-                grunt.log.writeln("loaded message format");
-                var messageFormatShared = that.getMessageFormatShared(),
+                    messages = grunt.file.readJSON(file),
+                    messageFormatLocale = that.getMessageFormatLocale(locale),
+                    messageFormatShared = that.getMessageFormatShared(),
                     translationsMap = {},
                     messageFormat = that.messageFormatFactory(locale, messageFormatLocale);
-                grunt.log.writeln("got all files");
                 Object.keys(messages).sort().forEach(function (key) {
                     try {
                         var value = messages[key].value,
