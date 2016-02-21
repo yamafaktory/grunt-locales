@@ -45,7 +45,7 @@
     "grunt-bump-build-git": "1.1.2"
   },
   "peerDependencies": {
-    "grunt": "0.4.x"
+    "grunt": ">=0.4.0"
   },
   "dependencies": {
     "cheerio": "0.19.0",
