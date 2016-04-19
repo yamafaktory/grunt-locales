@@ -35,10 +35,8 @@ module.exports = function (grunt) {
             wrapStaticTranslations: false,
             // Purge obsolete locale messages by default:
             purgeLocales: true,
-            messageFormatLocaleFile:
-                'messageformat/locale/{locale}.js',
-            messageFormatSharedFile:
-                'messageformat/lib/messageformat.include.js',
+            messageFormatLocaleFile: 'messageformat/locale/{locale}.js',
+            messageFormatSharedFile: 'messageformat/lib/messageformat.include.js',
             localeTemplate: __dirname + '/../i18n.js.tmpl',
             // Allow ftp, http(s), mailto, anchors
             // and messageformat variables (href="{url}"):
@@ -206,6 +204,10 @@ module.exports = function (grunt) {
                 messages[key] = obj;
             }
             messages[key].files.sort();
+            // Add the date property if present:
+            if (obj.date) {
+                messages[key].date = obj.date;
+            }
             return messages;
         },
 
@@ -275,13 +277,13 @@ module.exports = function (grunt) {
                         token4 = tokens[index + 3],
                         key;
                     if (token4 &&
-                            token.type === 'Identifier' &&
-                            identifiers.indexOf(token.value) !== -1 &&
-                            token2.type === 'Punctuator' &&
-                            token2.value === '(') {
+                        token.type === 'Identifier' &&
+                        identifiers.indexOf(token.value) !== -1 &&
+                        token2.type === 'Punctuator' &&
+                        token2.value === '(') {
                         if (token3.type === 'String' &&
-                                token4.type === 'Punctuator' &&
-                                (token4.value === ')' || token4.value === ',')) {
+                            token4.type === 'Punctuator' &&
+                            (token4.value === ')' || token4.value === ',')) {
                             // The token3 value is a String expression, e.g. "'Hello {name}!'",
                             // which we have to evaluate to an actual String:
                             key = require('vm').runInThisContext(token3.value);
@@ -464,6 +466,7 @@ module.exports = function (grunt) {
                     var localeFile = dest.replace(that.options.localePlaceholder, locale),
                         localeFileExists = grunt.file.exists(localeFile),
                         sortedMessages = {},
+                        cachedMessages,
                         messages,
                         key;
                     if (localeFileExists) {
@@ -478,10 +481,16 @@ module.exports = function (grunt) {
                     } else {
                         messages = parsedMessages;
                     }
+                    cachedMessages = Object.assign({}, messages);
                     // JavaScript objects are not ordered, however, creating a new object
                     // based on sorted keys creates a more consistent JSON output:
                     Object.keys(purgeLocales ? parsedMessages : messages).sort()
                         .forEach(function (key) {
+                            // Add a date property for new messages:
+                            if (JSON.stringify(cachedMessages[key])
+                                !== JSON.stringify(messages[key])) {
+                                messages[key].date = (new Date()).toUTCString();
+                            }
                             sortedMessages[key] = messages[key];
                         });
                     grunt.file.write(
@@ -567,7 +576,9 @@ module.exports = function (grunt) {
                     destFile = dest.replace(that.options.localePlaceholder, locale),
                     str;
                 grunt.log.writeln('Parsed locales from ' + file.cyan + '.');
-                str = encapsulator + escapeFunc(that.options.csvKeyLabel) + encapsulator +
+                str = encapsulator + escapeFunc('DATE') + encapsulator +
+                    delimiter +
+                    encapsulator + escapeFunc(that.options.csvKeyLabel) + encapsulator +
                     delimiter +
                     encapsulator + escapeFunc(locale) + encapsulator;
                 extraFields.forEach(function (field) {
@@ -577,8 +588,11 @@ module.exports = function (grunt) {
                 str += lineEnd;
                 Object.keys(localesMap).sort().forEach(function (key) {
                     var message = localesMap[key],
+                        messageDate = message.date || '',
                         messageValue = String(message.value || '');
-                    str +=  encapsulator + escapeFunc(key) + encapsulator +
+                    str += encapsulator + escapeFunc(messageDate) + encapsulator +
+                        delimiter +
+                        encapsulator + escapeFunc(key) + encapsulator +
                         delimiter +
                         encapsulator + escapeFunc(messageValue) + encapsulator;
                     extraFields.forEach(function (field) {
@@ -642,7 +656,9 @@ module.exports = function (grunt) {
                                 if (!messagesMap[locale]) {
                                     messagesMap[locale] = {};
                                 }
+                                // Inject the date as well:
                                 messagesMap[locale][key] = {
+                                    date: row['DATE'],
                                     value: content
                                 };
                             } catch (e) {
